@@ -514,6 +514,30 @@ theorem regularWeightNat_root_le
     simpa using iteratedBivariateWeight_monomial_le
       (totalBound + ell - ell * factor.natDegree) 1 (1 : Polynomial K)
 
+/-- Embedded coefficient polynomials are already canonical whenever the
+branch has positive degree. -/
+theorem canonicalRepresentative_of_coefficient
+    {K : Type*} [Field K] (factor : BivariatePolynomial K)
+    (factorNeZero : factor ≠ 0) (factorPositive : 0 < factor.natDegree)
+    (coefficient : Polynomial K) :
+    canonicalRepresentative factor factorNeZero
+        (AdjoinRoot.of (monicization factor) coefficient) =
+      Polynomial.C coefficient := by
+  unfold canonicalRepresentative AdjoinRoot.of AdjoinRoot.modByMonicHom
+  change Polynomial.C coefficient %ₘ monicization factor =
+    Polynomial.C coefficient
+  apply (Polynomial.modByMonic_eq_self_iff
+    (monicization_monic factor factorNeZero)).mpr
+  have coefficientDegree :
+      (Polynomial.C coefficient : BivariatePolynomial K).degree ≤ 0 :=
+    Polynomial.degree_C_le
+  have modulusDegree : (0 : WithBot Nat) < (monicization factor).degree := by
+    rw [Polynomial.degree_eq_natDegree
+      (monicization_monic factor factorNeZero).ne_zero,
+      monicization_natDegree]
+    exact_mod_cast factorPositive
+  exact coefficientDegree.trans_lt modulusDegree
+
 /-- The `WithBot` quotient weight is max-bounded under addition. -/
 theorem regularWeight_add_le
     {K : Type*} [Field K] (factor : BivariatePolynomial K)
@@ -694,6 +718,7 @@ theorem regularToFunctionField_ne_zero
 #print axioms regularWeightNat_finset_prod_le
 #print axioms regularWeightNat_of_le_natDegree
 #print axioms regularWeightNat_root_le
+#print axioms canonicalRepresentative_of_coefficient
 #print axioms regularWeight_add_le
 #print axioms regularWeight_mul_le
 #print axioms regularToFunctionField_injective
