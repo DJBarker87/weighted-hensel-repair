@@ -5,3 +5,4 @@ import WeightedHensel.RegularQuotient
 import WeightedHensel.SourceRecurrence
 import WeightedHensel.DirectRepair
 import WeightedHensel.Counterexamples
+import WeightedHensel.DivisionFreeRecurrence

@@ -538,6 +538,68 @@ theorem canonicalRepresentative_of_coefficient
     exact_mod_cast factorPositive
   exact coefficientDegree.trans_lt modulusDegree
 
+/-- Multiplication by an embedded coefficient is literal scalar
+multiplication on canonical representatives, so it requires no monic
+reduction. -/
+theorem canonicalRepresentative_coefficient_mul
+    {K : Type*} [Field K] (factor : BivariatePolynomial K)
+    (factorNeZero : factor ≠ 0) (coefficient : Polynomial K)
+    (element : RegularQuotient factor) :
+    canonicalRepresentative factor factorNeZero
+        (AdjoinRoot.of (monicization factor) coefficient * element) =
+      Polynomial.C coefficient *
+        canonicalRepresentative factor factorNeZero element := by
+  have productEq :
+      AdjoinRoot.of (monicization factor) coefficient * element =
+        coefficient • element := by
+    rw [Algebra.smul_def]
+    rfl
+  rw [productEq, map_smul]
+  exact Polynomial.smul_eq_C_mul coefficient
+
+/-- Multiplication by a nonzero `K[Z]` coefficient raises the weight of a
+nonzero quotient class by exactly the coefficient's degree. -/
+theorem regularWeight_coefficient_mul
+    {K : Type*} [Field K] (factor : BivariatePolynomial K)
+    (factorNeZero : factor ≠ 0) (generatorWeight : Nat)
+    (coefficient : Polynomial K) (coefficientNeZero : coefficient ≠ 0)
+    (element : RegularQuotient factor) (elementNeZero : element ≠ 0) :
+    regularWeight factor factorNeZero generatorWeight
+        (AdjoinRoot.of (monicization factor) coefficient * element) =
+      (coefficient.natDegree : WithBot Nat) +
+        regularWeight factor factorNeZero generatorWeight element := by
+  let representative := canonicalRepresentative factor factorNeZero element
+  have representativeNeZero : representative ≠ 0 := by
+    intro representativeZero
+    apply elementNeZero
+    have representativeZero' :
+        canonicalRepresentative factor factorNeZero element = 0 := by
+      simpa [representative] using representativeZero
+    rw [← mk_canonicalRepresentative factor factorNeZero element,
+      representativeZero', map_zero]
+  have productRepresentativeNeZero :
+      Polynomial.C coefficient * representative ≠ 0 :=
+    mul_ne_zero (Polynomial.C_ne_zero.mpr coefficientNeZero) representativeNeZero
+  have productNeZero :
+      AdjoinRoot.of (monicization factor) coefficient * element ≠ 0 := by
+    intro productZero
+    have canonicalZero := congrArg
+      (canonicalRepresentative factor factorNeZero) productZero
+    rw [canonicalRepresentative_coefficient_mul factor factorNeZero coefficient
+      element, map_zero] at canonicalZero
+    exact productRepresentativeNeZero canonicalZero
+  rw [regularWeight_eq_coe factor factorNeZero generatorWeight productNeZero,
+    regularWeight_eq_coe factor factorNeZero generatorWeight elementNeZero]
+  unfold regularWeightNat
+  rw [canonicalRepresentative_coefficient_mul factor factorNeZero]
+  have exactWeight := weight_C_mul_natDegree generatorWeight coefficientNeZero
+    representative
+  rw [weight_eq_coe generatorWeight productRepresentativeNeZero,
+    weight_eq_coe generatorWeight representativeNeZero,
+    localBivariateWeight_eq_iteratedBivariateWeight,
+    localBivariateWeight_eq_iteratedBivariateWeight] at exactWeight
+  exact exactWeight
+
 /-- The `WithBot` quotient weight is max-bounded under addition. -/
 theorem regularWeight_add_le
     {K : Type*} [Field K] (factor : BivariatePolynomial K)
@@ -719,6 +781,8 @@ theorem regularToFunctionField_ne_zero
 #print axioms regularWeightNat_of_le_natDegree
 #print axioms regularWeightNat_root_le
 #print axioms canonicalRepresentative_of_coefficient
+#print axioms canonicalRepresentative_coefficient_mul
+#print axioms regularWeight_coefficient_mul
 #print axioms regularWeight_add_le
 #print axioms regularWeight_mul_le
 #print axioms regularToFunctionField_injective

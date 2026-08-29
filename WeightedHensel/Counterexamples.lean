@@ -97,9 +97,12 @@ def saturationParent (K : Type*) [Field K] : TrivariatePolynomial K :=
 theorem saturationParent_specialize_zero
     {K : Type*} [Field K] :
     specializeX 0 (saturationParent K) = saturationSpecializedParent K := by
-  simp [specializeX, saturationParent, saturationSpecializedParent,
-    counterexampleChallenge, counterexampleTrivariateY,
-    counterexampleTrivariateZ, counterexampleFactor]
+  simp only [specializeX, saturationParent, counterexampleTrivariateY,
+    counterexampleTrivariateZ, counterexampleChallenge, Polynomial.map_add,
+    Polynomial.map_mul, map_X, Polynomial.map_pow, map_C, coe_mapRingHom,
+    Polynomial.map_one, coe_evalRingHom, eval_X, map_zero, add_zero,
+    saturationSpecializedParent, counterexampleFactor, map_pow, map_add,
+    map_one, mul_eq_mul_left_iff]
   exact Or.inl (by ring)
 
 theorem saturation_factor_divides
