@@ -6,3 +6,4 @@ import WeightedHensel.SourceRecurrence
 import WeightedHensel.DirectRepair
 import WeightedHensel.Counterexamples
 import WeightedHensel.DivisionFreeRecurrence
+import WeightedHensel.ResultantBound
