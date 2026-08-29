@@ -1,7 +1,7 @@
 name = "weighted-hensel-repair"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["WeightedHenselRepair"]
+defaultTargets = ["WeightedHensel"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -15,4 +15,4 @@ scope = "leanprover-community"
 rev = "v4.32.0"
 
 [[lean_lib]]
-name = "WeightedHenselRepair"
+name = "WeightedHensel"
