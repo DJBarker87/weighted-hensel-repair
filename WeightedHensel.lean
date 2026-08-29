@@ -1,2 +1,3 @@
 import WeightedHensel.Basic
 import WeightedHensel.WeightedDegree
+import WeightedHensel.Monicization
