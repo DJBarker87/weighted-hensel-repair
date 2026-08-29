@@ -3,3 +3,4 @@ import WeightedHensel.WeightedDegree
 import WeightedHensel.Monicization
 import WeightedHensel.RegularQuotient
 import WeightedHensel.SourceRecurrence
+import WeightedHensel.DirectRepair

@@ -455,6 +455,65 @@ theorem regularWeightNat_finset_sum_le
           (induction (fun other otherMem ↦ elementBound other
             (Finset.mem_insert_of_mem otherMem)))
 
+/-- A finite product is bounded by the sum of the factor weights. -/
+theorem regularWeightNat_finset_prod_le
+    {K ι : Type*} [Field K]
+    (factor : BivariatePolynomial K) (factorNeZero : factor ≠ 0)
+    (ell totalBound : Nat)
+    (coefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + ell * exponent ≤ totalBound)
+    (indices : Finset ι) (element : ι → RegularQuotient factor) :
+    regularWeightNat factor factorNeZero
+        (totalBound + ell - ell * factor.natDegree)
+        (∏ index ∈ indices, element index) ≤
+      ∑ index ∈ indices,
+        regularWeightNat factor factorNeZero
+          (totalBound + ell - ell * factor.natDegree) (element index) := by
+  classical
+  induction indices using Finset.induction_on with
+  | empty => simp
+  | @insert index indices indexNotMem induction =>
+      rw [Finset.prod_insert indexNotMem, Finset.sum_insert indexNotMem]
+      exact (regularWeightNat_mul_le factor factorNeZero ell totalBound
+        coefficientBound _ _).trans (Nat.add_le_add le_rfl induction)
+
+/-- An embedded coefficient polynomial costs at most its `Z`-degree. -/
+theorem regularWeightNat_of_le_natDegree
+    {K : Type*} [Field K] (factor : BivariatePolynomial K)
+    (factorNeZero : factor ≠ 0) (ell totalBound : Nat)
+    (coefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + ell * exponent ≤ totalBound)
+    (coefficient : Polynomial K) :
+    regularWeightNat factor factorNeZero
+        (totalBound + ell - ell * factor.natDegree)
+        (AdjoinRoot.of (monicization factor) coefficient) ≤
+      coefficient.natDegree := by
+  unfold AdjoinRoot.of
+  have reduced := regularWeightNat_mk_le factor factorNeZero ell totalBound
+    coefficientBound (Polynomial.C coefficient)
+  exact reduced.trans <| by
+    rw [← Polynomial.monomial_zero_left]
+    simpa using iteratedBivariateWeight_monomial_le
+      (totalBound + ell - ell * factor.natDegree) 0 coefficient
+
+/-- The regular generator `T` costs at most its declared weight. -/
+theorem regularWeightNat_root_le
+    {K : Type*} [Field K] (factor : BivariatePolynomial K)
+    (factorNeZero : factor ≠ 0) (ell totalBound : Nat)
+    (coefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + ell * exponent ≤ totalBound) :
+    regularWeightNat factor factorNeZero
+        (totalBound + ell - ell * factor.natDegree)
+        (AdjoinRoot.root (monicization factor)) ≤
+      totalBound + ell - ell * factor.natDegree := by
+  have reduced := regularWeightNat_mk_le factor factorNeZero ell totalBound
+    coefficientBound Polynomial.X
+  exact reduced.trans <| by
+    rw [show (Polynomial.X : BivariatePolynomial K) =
+      Polynomial.monomial 1 1 by rfl]
+    simpa using iteratedBivariateWeight_monomial_le
+      (totalBound + ell - ell * factor.natDegree) 1 (1 : Polynomial K)
+
 /-- The `WithBot` quotient weight is max-bounded under addition. -/
 theorem regularWeight_add_le
     {K : Type*} [Field K] (factor : BivariatePolynomial K)
@@ -632,6 +691,9 @@ theorem regularToFunctionField_ne_zero
 #print axioms regularWeightNat_add_le
 #print axioms regularWeightNat_pow_le
 #print axioms regularWeightNat_finset_sum_le
+#print axioms regularWeightNat_finset_prod_le
+#print axioms regularWeightNat_of_le_natDegree
+#print axioms regularWeightNat_root_le
 #print axioms regularWeight_add_le
 #print axioms regularWeight_mul_le
 #print axioms regularToFunctionField_injective
