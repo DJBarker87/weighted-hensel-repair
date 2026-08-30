@@ -1,13 +1,213 @@
-# weighted-hensel-repair
+# Correcting the Weighted Hensel Estimate
 
-## GitHub configuration
+This is a standalone Lean 4 verification artifact for Revision 14 of
+*Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
+Decodability*. It formalizes the polynomial weight, monicization, regular
+quotient, both repaired Hensel recurrences, both resultant arguments,
+specialization, truncation, interpolation, fixed-branch completion, the 2026
+full-factor transfer, the paper's counterexamples, and both numerical
+Reed–Solomon instances.
 
-To set up your new GitHub repository, follow these steps:
+The development depends only on Lean and Mathlib. It does not import Aspis or
+formalize any protocol, compiler, cryptographic primitive, or deployment
+machinery.
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
+## Verification status
 
-After following the steps above, you can remove this section from the README file.
+All Lean sources build without `sorry`, `admit`, project axioms,
+`native_decide`, or oracle propositions. The union of the logical axioms
+reported by the paper-level declarations is:
+
+```text
+propext
+Classical.choice
+Quot.sound
+```
+
+There is one paper-level qualification. Proposition 7.10 uses separability
+after specializing `X = x₀`, but generic separability of `Rᵢ` does not imply
+separability at an arbitrary specialization. The formal theorem therefore
+states the exact nonvanishing condition on the specialized regular derivative.
+This is classification **C-001** in [AUDIT.md](AUDIT.md): the proposition is
+repairable, and the repaired statement is proved, but the missing operative
+hypothesis is not hidden.
+
+## Toolchain and replay
+
+The repository pins:
+
+- Lean `v4.32.0` in `lean-toolchain`;
+- Mathlib `v4.32.0` in `lakefile.toml`;
+- the exact Mathlib commit and transitive dependencies in
+  `lake-manifest.json`.
+
+From a clean checkout:
+
+```sh
+lake build WeightedHensel.Terminal
+lake build
+```
+
+The first command checks all paper-level terminal theorems. The second checks
+the whole library. `Main.lean` imports `WeightedHensel.Terminal` as a minimal
+top-level replay target.
+
+## Mathematical representation
+
+For a field `K`, the repository uses:
+
+- `Polynomial K` for `K[Z]`;
+- `BivariatePolynomial K = Polynomial (Polynomial K)` for `K[Z,T]` or
+  `K[Z,Y]`, with the outer variable named by context;
+- `TrivariatePolynomial K = Polynomial (BivariatePolynomial K)` for
+  `K[X,Z,Y]`, again with the outer variable named by context;
+- `RegularQuotient factor` for `K[Z,T]/(Ĥ)`;
+- `BranchFunctionField factor` for the corresponding quotient over `K(Z)`.
+
+The weight of zero is represented by `WithBot Nat`. No weight is defined on
+arbitrary elements of `BranchFunctionField factor`.
+
+## Paper-to-Lean map
+
+The table names the principal declaration for each result. Several rows also
+list supporting declarations where the paper combines more than one
+mathematical fact in a single statement.
+
+| Paper result | Lean declaration | Status |
+| --- | --- | --- |
+| Saturation/base-case example | `saturation_tau_strictly_exceeds_printed_base`, `saturationParent_coefficient_bound` | proved |
+| Proposition 3.1: sharp positive-order counterexample | `positive_order_beta_one`, `positive_order_beta_one_regular_weight`, `positiveOrderParent_irreducible`, `positiveOrderParent_separableInResponse` | proved |
+| Remark 3.2: derivative-numerator counterexample | `derivative_counterexample_xi_regular_weight`, `derivative_printed_ceiling_fails`, `derivativeCounterexampleParent_irreducible`, `derivativeCounterexampleParent_separableInResponse`, `derivativeSpecializedParent_squarefree` | proved |
+| Lemma 4.1: translation preserves the parent bound | `shiftedParentCoefficient_bound` | proved |
+| Corrected auxiliary numerator bound, Lemma 4.2 | `exists_sourceAuxiliaryNumerator` | proved |
+| Polynomial `W`-divisibility at shifted order zero | `leadingCoeff_dvd_sourceClearedRepresentative_zero` | proved |
+| Corrected derivative numerator, Corollary 4.3 | `exists_sourceDerivativeNumerator` | proved |
+| Source partition and excluded singleton bookkeeping | `SourceTermIndex.singleton_excluded_of_s_eq_zero`, `SourceTermIndex.recursive_index_lt`, `SourceTermIndex.partition_eq_zero_of_s_eq_t` | proved |
+| Source `W`, derivative, and structural ledgers | `SourceTermIndex.w_ledger`, `SourceTermIndex.derivative_ledger`, `source_structural_ledger`, `source_parameter_ledger` | proved |
+| Direct `βₜ` induction, Theorem 4.4 | `corrected_source_hensel_estimate` | proved |
+| Direct-repair pole, coefficient-resultant, and common-numerator budgets | `sourcePoleBudget_lt_coarse`, `sourceCoefficientResultantBudget_lt_coarse`, `sourceSecondResultantBudget_lt_coarse` | proved |
+| Lemma 6.1: regular quotient embedding and domain | `regularToFunctionField_injective`, `regularQuotient_isDomain`, `branchPolynomial_irreducible` | proved |
+| Lemma 6.2: monic reduction does not raise weight | `iteratedBivariateWeight_modByMonic_le`, `regularWeightNat_mk_le` | proved |
+| Corollary 6.3: quotient weight laws | `regularWeight_add_le`, `regularWeight_mul_le`, `regularWeightNat_pow_le` | proved |
+| Lemma 6.4: cleared derivative and coefficient bounds | `regularDerivativeElement_weight_le`, `regularClearedCoefficient_weight_add_le` | proved |
+| Denominator-free recurrence, Theorem 6.5 | `divisionFreeCoefficients`, `division_free_defined_estimate`, `divisionFreeCoefficients_image` | proved |
+| Relation between the two repairs, Proposition 6.6 | `divisionFree_eq_sourceNumerator`, `divisionFree_sourceNumerator_weight_eq`, `direct_and_divisionFree_ceilings_equivalent` | proved |
+| Weighted Sylvester bound, Lemma 7.1 | `weighted_resultant_degree_bound` | proved |
+| Nonzero resultant and branch zero count, Corollary 7.2 | `canonicalRepresentative_resultant_ne_zero`, `weighted_resultant_zero_count` | proved |
+| Regular specialization and cleared coefficient identity, Lemma 7.3 | `branchSpecialization_parentDivisionFreeCoefficients` | proved |
+| High-coefficient zero count and cancellation | `parentDivisionFreeCoefficients_eq_zero_of_many_branches`, `henselCoefficient_eq_zero_of_cleared_eq_zero` | proved |
+| Exact finite truncation | `exists_exact_henselTruncation_of_many_branches` | proved |
+| Common numerator, Lemma 7.4 | `commonNumerator_image`, `commonNumerator_eval_weightNat_le` | proved |
+| Second discrepancy/resultant, Lemma 7.5 | `commonDiscrepancy_eq_zero_of_many_branches`, `secondResultant_identifies_henselTruncation` | proved |
+| Heavy-coordinate count, Lemma 7.6 | `maximumDegree_lt_card_heavyCoordinates` | proved |
+| Coefficientwise interpolation | `lagrangeCoefficientCurve_eval_at_node`, `candidate_eq_candidateCurve` | proved |
+| Fixed-branch completion, Theorem 7.7 / Corollary 7.8 | `fixed_branch_curve_decodability` | proved |
+| Published coarse comparison, Corollary 7.9 | `weightedDivisionFreeBudget_lt_coarse`, `sourceSecondResultantBudget_lt_coarse` | proved |
+| Full-degree shifted-coefficient counterexample | `fullDegreeCounterexample_specialized_zDegree`, `fullDegreeCounterexample_shifted_zDegree` | proved |
+| Shifted-coefficient full-degree lemma | `shiftedCoefficient_fullDegree_le` | proved |
+| Specialization content and branch degree sums | `specialization_content_branch_weight_summation`, `specialization_branch_yDegree_summation` | proved |
+| Pairwise factor-degree summation | `factor_square_weight_sum_le_global`, `factor_branch_pair_weight_sum_le` | proved |
+| Content roots charged to the derivative resultant | `specialization_content_dvd_clearedDerivativeRepresentative`, `card_content_root_specializations_lt_pole_budget` | proved |
+| 2026 full-factor summation, Proposition 7.10 | `full_factor_degree_transfer` | proved with explicit C-001 repair |
+| Exact degree-28 Guruswami–Sudan cap | `degree28_guruswamiSudan_list_card_le_100` | proved |
+| Exact degree-3 Guruswami–Sudan cap | `degree3_guruswamiSudan_list_card_le_99` | proved |
+| Separate analytic list parameters 112 and 113 | `degree28_rateOnlyListExpression_eq_112`, `degree3_rateOnlyListExpression_lt_113` | proved |
+| Exact outer and curve-decodability allowances | `exact_degree28_outerExceptionalAllowance`, `exact_degree3_outerExceptionalAllowance`, `exact_degree28_curveDecodabilityAllowance`, `exact_degree3_curveDecodabilityAllowance` | proved |
+| Degree-28 released-subcode dimension distinction | `degree28_released_subcode_dimension_strict` | proved |
+| Degree-28 fixed-branch concrete specialization | `concrete_degree28_curve_decodable` | proved |
+| Degree-3 fixed-branch concrete specialization | `concrete_degree3_curve_decodable` | proved |
+
+The two concrete terminal theorems instantiate the fixed-branch completion
+with the exact numerical allowances and GRS normalization. The independent
+global factor-selection bookkeeping is `full_factor_degree_transfer`; the
+repository does not disguise either result as an executable decoder.
+
+## Module guide
+
+| Module | Contents |
+| --- | --- |
+| `Basic` | Ring aliases, Hensel exponent, elementary arithmetic |
+| `WeightedDegree` | `WithBot` polynomial weight and exact/subadditive laws |
+| `Monicization` | Division-free monicization and coefficient bounds |
+| `RegularQuotient` | Canonical representatives, quotient weights, field embedding |
+| `SourceRecurrence` | Partitions, exclusion rule, nonnegative exponents, ledgers |
+| `DirectRepair` | Shifted coefficients, auxiliary numerators, direct `βₜ` repair |
+| `Counterexamples` | Three explicit counterexamples and admissibility checks |
+| `DivisionFreeRecurrence` | Intrinsic `δₜ` recurrence and equivalence to `βₜ` |
+| `ResultantBound` | Weighted Sylvester determinant and root-pair zero count |
+| `Specialization` | Evaluation on the regular quotient and specialized recurrence |
+| `PowerSeriesLift` | Simple-root lift and image identities |
+| `Truncation` | Vanishing high coefficients and exact finite root |
+| `CommonNumerator` | `Δₘ`, discrepancy, and second resultant |
+| `Incidence` | Heavy-coordinate double count |
+| `Interpolation` | Coefficientwise Lagrange interpolation and candidate recovery |
+| `FixedBranch` | Fixed-branch curve completion theorem |
+| `CoarseBounds` | Repaired bounds versus the published coarse allowances |
+| `FactorDegreeTransfer` | Full weighted-degree preservation and 2026 factor summation |
+| `JohnsonBound` | Exact finite incidence/list-cardinality inequality |
+| `CurveDecodability` | GRS normalization and multiplier restoration |
+| `ConcreteParameters` | Both exact numerical parameter columns |
+| `Terminal` | Seven paper-level terminal declarations and axiom reports |
+
+## Terminal declarations
+
+`WeightedHensel/Terminal.lean` reports axioms for:
+
+```text
+corrected_source_hensel_estimate
+division_free_hensel_estimate
+weighted_resultant_zero_count
+fixed_branch_curve_decodability
+full_factor_degree_transfer
+concrete_degree28_curve_decodable
+concrete_degree3_curve_decodable
+```
+
+## Concrete values
+
+| Parameter | Degree-28 combination | Degree-3 fold |
+| --- | ---: | ---: |
+| Evaluation-domain size | 1,048,576 | 262,144 |
+| Maximum candidate degree | 1,024 | 255 |
+| Challenge-curve degree / branch weight | 28 | 3 |
+| Strict support threshold | 38,229 | 9,557 |
+| Concrete GS list cap | 100 | 99 |
+| Analytic parameter used in the allowance | 112 exactly | less than 113, hence 113 |
+| Outer exceptional allowance | 87,316,067,086,790 | 2,388,155,905,379 |
+| Curve-decodability allowance | 336,869,026,605,739 | 9,396,508,281,246 |
+
+The values 112 and 113 are not rounded forms of 100 and 99; the formal
+development proves that distinction explicitly. In the first instance, the
+released message image has dimension 1024 while the ambient space of
+polynomials of degree at most 1024 has dimension 1025.
+
+## Noncomputability and external mathematical data
+
+Classical choice is used for quotient representatives, roots/factor choices,
+finite assignment choices, and interpolation. Real square roots are used only
+in the concrete analytic calculations. No executable decoder is claimed.
+
+The generic theorems take the paper's operative algebraic data as explicit
+hypotheses: polynomial factorizations, irreducibility, branch roots,
+nonvanishing leading coefficients and regular derivatives, degree bounds,
+candidate-root identities, agreement supports, and cardinality inequalities.
+The development proves the consequences of those hypotheses; it does not
+formalize the cited papers' interpolation-polynomial construction or an
+algorithm that discovers the factors.
+
+## Independence and audit discipline
+
+Aspis was consulted only for reusable mathematical proof patterns. There is
+no Aspis dependency and no application-specific API in this repository.
+
+The source audit used for release is:
+
+```sh
+git diff --check
+rg -n '\b(sorry|admit|sorryAx|axiom|native_decide)\b' --glob '*.lean' .
+lake build WeightedHensel.Terminal
+lake build
+```
+
+See [AUDIT.md](AUDIT.md) for every classification C–E. At this revision the
+only such item is C-001.
