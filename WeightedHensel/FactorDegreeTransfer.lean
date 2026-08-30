@@ -5,6 +5,7 @@ Authors: Dominic Barker
 -/
 
 import WeightedHensel.CoarseBounds
+import WeightedHensel.ResultantBound
 import Mathlib.Algebra.Polynomial.BigOperators
 
 /-!
@@ -320,6 +321,138 @@ theorem eval₂_clearedDerivativeRepresentative_eq_zero_of_content_root
       content cofactor factorization W d
   rw [representativeEq, Polynomial.eval₂_mul, Polynomial.eval₂_C]
   simp [contentRoot]
+
+/-- Equation (120), with the degree estimate from (44): content-root
+specializations on a fixed branch are charged to the roots of `W` and the
+weighted resultant of the nonzero regular derivative numerator `xi`.
+
+The explicit hypothesis that the intrinsic regular derivative is nonzero is
+the operative meaning of the paper's phrase that the chosen specialized
+branch is simple. -/
+theorem card_content_root_specializations_lt_pole_budget
+    {K : Type*} [Field K]
+    (parent : TrivariatePolynomial K) (factor : BivariatePolynomial K)
+    (factorIrreducible : Irreducible factor)
+    (factorPositive : 0 < factor.natDegree)
+    (parentPositive : 1 ≤ parent.natDegree)
+    (x₀ : K) (content : Polynomial K) (cofactor : BivariatePolynomial K)
+    (factorization : specializeX x₀ parent =
+      Polynomial.C content * cofactor)
+    (factorDvd : factor ∣ specializeX x₀ parent)
+    (factorWeightLe : localBivariateWeight 1 factor ≤
+      fullYZWeightedDegree 1 parent)
+    (etaNeZero : regularDerivativeElement parent factor x₀
+      parent.natDegree ≠ 0)
+    (challenges : Finset K) (rootValue : K → K)
+    (rootPair : ∀ z ∈ challenges,
+      (monicization factor).eval₂ (Polynomial.evalRingHom z)
+        (rootValue z) = 0)
+    (contentRoot : ∀ z ∈ challenges, content.eval z = 0) :
+    challenges.card <
+      parent.natDegree * factor.natDegree * fullYZWeightedDegree 1 parent := by
+  classical
+  let G := fullYZWeightedDegree 1 parent
+  let h := factor.natDegree
+  let d := parent.natDegree
+  let b := G - h
+  let tau := b + 1
+  let mu := sourceMu G 1 d b
+  let w := factor.leadingCoeff.natDegree
+  let sigma := sourceSigma G 1 d b w
+  have factorNeZero : factor ≠ 0 := factorIrreducible.ne_zero
+  have factorCoefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + 1 * exponent ≤ G := by
+    intro exponent exponentMem
+    simpa [G, Nat.mul_comm] using
+      (coeff_weight_le_localBivariateWeight 1 factor exponent
+        exponentMem).trans factorWeightLe
+  have leadingMem : h ∈ factor.support := by
+    exact Polynomial.natDegree_mem_support_of_nonzero factorNeZero
+  have leadingBound : w + h ≤ G := by
+    simpa [h, w] using factorCoefficientBound h leadingMem
+  have hLeG : h ≤ G := by omega
+  have GPositive : 1 ≤ G := by omega
+  have wLeB : w ≤ b := by
+    dsimp [b]
+    omega
+  have specializedDegreeLe : (specializeX x₀ parent).natDegree ≤ d := by
+    exact Polynomial.natDegree_map_le
+  obtain ⟨xi, clearing, xiBound⟩ :=
+    exists_sourceDerivative_for_regularDerivative parent factor x₀
+      1 G G d b tau factorNeZero factorCoefficientBound (by
+        simpa [h] using hLeG) (by simp [b, h]) rfl
+      (parentCoefficientBound_fullYZWeightedDegree 1 parent) wLeB
+      parentPositive factorDvd specializedDegreeLe
+  have xiNeZero : xi ≠ 0 := by
+    intro xiZero
+    apply etaNeZero
+    rw [clearing, xiZero, mul_zero]
+  have xiWeightLe : regularWeightNat factor factorNeZero tau xi ≤ sigma := by
+    rw [regularWeight_eq_coe factor factorNeZero tau xiNeZero] at xiBound
+    exact WithBot.coe_le_coe.mp xiBound
+  let leadingRoots := challenges.filter fun z ↦ factor.leadingCoeff.eval z = 0
+  let derivativeRoots := challenges.filter fun z ↦ factor.leadingCoeff.eval z ≠ 0
+  have leadingCoefficientNeZero : factor.leadingCoeff ≠ 0 :=
+    Polynomial.leadingCoeff_ne_zero.mpr factorNeZero
+  have leadingCard : leadingRoots.card ≤ w := by
+    apply Polynomial.card_le_degree_of_subset_roots
+    intro z zMem
+    rw [Polynomial.mem_roots leadingCoefficientNeZero, Polynomial.IsRoot]
+    exact (Finset.mem_filter.mp zMem).2
+  have derivativeCard : derivativeRoots.card ≤
+      h * regularWeightNat factor factorNeZero tau xi := by
+    have countBound := card_rootPair_specializations_le factor
+      factorIrreducible factorPositive 1 G factorCoefficientBound xi xiNeZero
+      derivativeRoots rootValue (fun z zMem ↦
+        rootPair z (Finset.mem_filter.mp zMem).1) (fun z zMem ↦ by
+          have zMemChallenges : z ∈ challenges :=
+            (Finset.mem_filter.mp zMem).1
+          have leadingValueNeZero : factor.leadingCoeff.eval z ≠ 0 :=
+            (Finset.mem_filter.mp zMem).2
+          let pairProof := rootPair z zMemChallenges
+          have etaZero : regularSpecialization factor z (rootValue z) pairProof
+              (regularDerivativeElement parent factor x₀ d) = 0 := by
+            unfold regularDerivativeElement regularSpecialization
+            rw [AdjoinRoot.lift_mk]
+            exact eval₂_clearedDerivativeRepresentative_eq_zero_of_content_root
+              parent x₀ content cofactor factorization factor.leadingCoeff d z
+                (rootValue z) (contentRoot z zMemChallenges)
+          have mappedClearing := congrArg
+            (regularSpecialization factor z (rootValue z) pairProof) clearing
+          rw [map_mul, regularSpecialization_of] at mappedClearing
+          rw [etaZero] at mappedClearing
+          exact (mul_eq_zero.mp mappedClearing.symm).resolve_left
+            leadingValueNeZero)
+    have generatorEq : G + 1 - 1 * h = tau := by
+      dsimp [tau, b]
+      omega
+    change derivativeRoots.card ≤
+      h * regularWeightNat factor factorNeZero (G + 1 - 1 * h) xi at countBound
+    rw [generatorEq] at countBound
+    exact countBound
+  have wLeMu : w ≤ mu := by
+    dsimp [mu, sourceMu]
+    omega
+  have muLt : mu < d * G := by
+    exact sourceMu_lt_commonDegree G G G 1 h d mu le_rfl le_rfl
+      (by omega) GPositive parentPositive (by simp [mu, b, sourceMu])
+  have poleBudget : w + h * regularWeightNat factor factorNeZero tau xi <
+      h * d * G := by
+    exact sourcePoleBudget_lt_coarse h w
+      (regularWeightNat factor factorNeZero tau xi) sigma mu d G
+      (by omega) wLeMu rfl xiWeightLe muLt
+  have partition := Finset.card_filter_add_card_filter_not
+    (s := challenges) (fun z ↦ factor.leadingCoeff.eval z = 0)
+  calc
+    challenges.card = leadingRoots.card + derivativeRoots.card := by
+      simpa [leadingRoots, derivativeRoots] using partition.symm
+    _ ≤ w + h * regularWeightNat factor factorNeZero tau xi :=
+      Nat.add_le_add leadingCard derivativeCard
+    _ < h * d * G := poleBudget
+    _ = parent.natDegree * factor.natDegree *
+        fullYZWeightedDegree 1 parent := by
+      simp only [d, h, G]
+      ring
 
 /-- Equation (110), weighted-degree half: the content and all full factor
 degrees sum within the global weighted degree. -/
@@ -729,13 +862,10 @@ theorem remove_local_exception_budget
       _ = (2 * DX - 1) * localWeight + localWeight := by ring
   omega
 
-/-- Paper-facing full-factor transfer.  The assignment and removal data are
-the explicit finite sets/counts constructed in Proposition 7.10: unlike a
-prose phrase such as “genuine specializations”, every discarded and surviving
-cardinality is visible in the hypotheses.  The conclusion includes both the
-full shifted-coefficient bound (111) and the strict surviving allowance
-(121). -/
-theorem full_factor_degree_transfer
+/-- Numerical core of the full-factor transfer once each local exceptional
+set has already been bounded.  The paper-facing theorem below derives that
+bound from the actual content roots and regular derivative resultants. -/
+theorem full_factor_degree_transfer_of_local_exception_bounds
     {K ι κ : Type*} [Field K] [DecidableEq ι] [DecidableEq κ]
     (indices : Finset ι) (branchIndices : ι → Finset κ)
     (parent : ι → TrivariatePolynomial K) (multiplicity : ι → Nat)
@@ -803,6 +933,154 @@ theorem full_factor_degree_transfer
       (removedSmall index indexMem branchIndex branchIndexMem)
       (removalPartition index indexMem branchIndex branchIndexMem)
 
+/-- Paper-facing full-factor transfer with the local removal sets represented
+as actual field elements.  Their strict bounds are proved, rather than
+assumed, by `card_content_root_specializations_lt_pole_budget`.
+
+The assignment count is the explicit finite combinatorial ledger constructed
+before equation (114).  For each assigned branch, `removedRoots` is precisely
+the subset assigned only because the specialization content vanishes; the
+surviving count is its complement as recorded by `removalPartition`. -/
+theorem full_factor_degree_transfer
+    {K ι κ : Type*} [Field K] [DecidableEq K]
+    [DecidableEq ι] [DecidableEq κ]
+    (indices : Finset ι) (branchIndices : ι → Finset κ)
+    (x₀ : K) (parent : ι → TrivariatePolynomial K)
+    (multiplicity : ι → Nat) (content : ι → Polynomial K)
+    (branch : ι → κ → BivariatePolynomial K)
+    (assigned surviving : ι → κ → Nat)
+    (removedRoots : ι → κ → Finset K)
+    (rootValue : ι → κ → K → K)
+    (DX DY DZ gammaN discardedDegree challengeCount : Nat)
+    (multiplicityPositive :
+      ∀ index ∈ indices, 1 ≤ multiplicity index)
+    (parentPositive : ∀ index ∈ indices, 1 ≤ (parent index).natDegree)
+    (contentNeZero : ∀ index ∈ indices, content index ≠ 0)
+    (branchNeZero : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        branch index branchIndex ≠ 0)
+    (branchPositive : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        0 < (branch index branchIndex).natDegree)
+    (branchIrreducible : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        Irreducible (branch index branchIndex))
+    (specializationFactorization : ∀ index ∈ indices,
+      specializeX x₀ (parent index) = Polynomial.C (content index) *
+        ∏ branchIndex ∈ branchIndices index, branch index branchIndex)
+    (etaNeZero : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        regularDerivativeElement (parent index) (branch index branchIndex) x₀
+          (parent index).natDegree ≠ 0)
+    (removedRootPair : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+      ∀ z ∈ removedRoots index branchIndex,
+        (monicization (branch index branchIndex)).eval₂
+          (Polynomial.evalRingHom z) (rootValue index branchIndex z) = 0)
+    (removedContentRoot : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+      ∀ z ∈ removedRoots index branchIndex,
+        (content index).eval z = 0)
+    (yDegreeBudget : ∑ index ∈ indices,
+      multiplicity index * (parent index).natDegree ≤ DY)
+    (weightedDegreeBudget : discardedDegree +
+      ∑ index ∈ indices,
+        multiplicity index * fullYZWeightedDegree 1 (parent index) ≤ DZ)
+    (globalMultiplierPositive : 1 ≤ 2 * DX * DY ^ 2)
+    (challengeCountLe : challengeCount ≤ discardedDegree +
+      ∑ index ∈ indices,
+        ∑ branchIndex ∈ branchIndices index,
+          assigned index branchIndex)
+    (challengeCountLarge :
+      2 * DX * DY ^ 2 * DZ + (gammaN + 1) * DY < challengeCount)
+    (removalPartition : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        assigned index branchIndex =
+          (removedRoots index branchIndex).card + surviving index branchIndex) :
+    ∃ index ∈ indices, ∃ branchIndex ∈ branchIndices index,
+      (∀ order yExponent,
+        shiftedParentCoefficient x₀ order yExponent (parent index) ≠ 0 →
+          (shiftedParentCoefficient x₀ order yExponent
+              (parent index)).natDegree + yExponent ≤
+            fullYZWeightedDegree 1 (parent index)) ∧
+      (2 * DX - 1) *
+            ((parent index).natDegree *
+              (branch index branchIndex).natDegree *
+                fullYZWeightedDegree 1 (parent index)) +
+          gammaN + 1 < surviving index branchIndex := by
+  classical
+  have branchDegreeSumLe : ∀ index ∈ indices,
+      ∑ branchIndex ∈ branchIndices index,
+        (branch index branchIndex).natDegree ≤ (parent index).natDegree := by
+    intro index indexMem
+    exact specialization_branch_yDegree_summation (parent index) x₀
+      (branchIndices index) (content index) (branch index)
+      (contentNeZero index indexMem) (branchNeZero index indexMem)
+      (specializationFactorization index indexMem)
+  have branchCountLe : ∀ index ∈ indices,
+      (branchIndices index).card ≤ (parent index).natDegree := by
+    intro index indexMem
+    exact specialization_branch_count_le (parent index) x₀
+      (branchIndices index) (content index) (branch index)
+      (contentNeZero index indexMem) (branchNeZero index indexMem)
+      (fun branchIndex branchIndexMem ↦ by
+        exact branchPositive index indexMem branchIndex branchIndexMem)
+      (specializationFactorization index indexMem)
+  have removedSmall : ∀ index ∈ indices,
+      ∀ branchIndex ∈ branchIndices index,
+        (removedRoots index branchIndex).card <
+          (parent index).natDegree *
+            (branch index branchIndex).natDegree *
+              fullYZWeightedDegree 1 (parent index) := by
+    intro index indexMem branchIndex branchIndexMem
+    have branchWeightLe : localBivariateWeight 1
+          (branch index branchIndex) ≤
+        fullYZWeightedDegree 1 (parent index) := by
+      have termLe : localBivariateWeight 1 (branch index branchIndex) ≤
+          ∑ candidate ∈ branchIndices index,
+            localBivariateWeight 1 (branch index candidate) := by
+        exact Finset.single_le_sum
+          (s := branchIndices index)
+          (f := fun candidate ↦
+            localBivariateWeight 1 (branch index candidate))
+          (fun _ _ ↦ Nat.zero_le _) branchIndexMem
+      have sumBound := specialization_content_branch_weight_summation
+        (parent index) x₀ 1 (branchIndices index) (content index)
+        (branch index) (contentNeZero index indexMem)
+        (branchNeZero index indexMem)
+        (specializationFactorization index indexMem)
+      omega
+    have factorDvd : branch index branchIndex ∣
+        specializeX x₀ (parent index) := by
+      rw [specializationFactorization index indexMem]
+      exact dvd_mul_of_dvd_right
+        (Finset.dvd_prod_of_mem (branch index) branchIndexMem)
+        (Polynomial.C (content index))
+    exact card_content_root_specializations_lt_pole_budget
+      (parent index) (branch index branchIndex)
+      (branchIrreducible index indexMem branchIndex branchIndexMem)
+      (branchPositive index indexMem branchIndex branchIndexMem)
+      (parentPositive index indexMem) x₀ (content index)
+      (∏ candidate ∈ branchIndices index, branch index candidate)
+      (specializationFactorization index indexMem) factorDvd branchWeightLe
+      (etaNeZero index indexMem branchIndex branchIndexMem)
+      (removedRoots index branchIndex) (rootValue index branchIndex)
+      (removedRootPair index indexMem branchIndex branchIndexMem)
+      (removedContentRoot index indexMem branchIndex branchIndexMem)
+  obtain ⟨index, indexMem, branchIndex, branchIndexMem,
+      coefficientBound, survivingLarge⟩ :=
+    full_factor_degree_transfer_of_local_exception_bounds
+      indices branchIndices parent multiplicity
+      (fun index branchIndex ↦ (branch index branchIndex).natDegree)
+      assigned (fun index branchIndex ↦ (removedRoots index branchIndex).card)
+      surviving DX DY DZ gammaN discardedDegree challengeCount
+      multiplicityPositive branchDegreeSumLe branchCountLe yDegreeBudget
+      weightedDegreeBudget globalMultiplierPositive challengeCountLe
+      challengeCountLarge removalPartition removedSmall
+  refine ⟨index, indexMem, branchIndex, branchIndexMem, ?_, survivingLarge⟩
+  intro order yExponent coefficientNeZero
+  exact coefficientBound x₀ order yExponent coefficientNeZero
+
 #print axioms shiftedCoefficient_fullDegree_le
 #print axioms fullDegreeCounterexample_specialized_zDegree
 #print axioms fullDegreeCounterexample_shifted_zDegree
@@ -815,10 +1093,12 @@ theorem full_factor_degree_transfer
 #print axioms specialization_branch_yDegree_summation
 #print axioms specialization_content_dvd_clearedDerivativeRepresentative
 #print axioms eval₂_clearedDerivativeRepresentative_eq_zero_of_content_root
+#print axioms card_content_root_specializations_lt_pole_budget
 #print axioms factor_square_weight_sum_le_global
 #print axioms full_factor_global_allowance
 #print axioms exists_factor_branch_above_preliminary_allowance
 #print axioms remove_local_exception_budget
+#print axioms full_factor_degree_transfer_of_local_exception_bounds
 #print axioms full_factor_degree_transfer
 
 end
