@@ -14,3 +14,5 @@ import WeightedHensel.CommonNumerator
 import WeightedHensel.Incidence
 import WeightedHensel.Interpolation
 import WeightedHensel.FixedBranch
+import WeightedHensel.CoarseBounds
+import WeightedHensel.FactorDegreeTransfer
