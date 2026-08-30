@@ -441,6 +441,59 @@ def sourceMu (DR ell d b : Nat) : Nat :=
 def sourceSigma (DR ell d b w : Nat) : Nat :=
   sourceMu DR ell d b - w
 
+/-- Polynomial-level form of the derivative numerator construction.  The
+cleared derivative representative is literally `W * xiRepresentative`, not
+merely equal to it in the regular quotient.  This form is needed in the 2026
+transfer to show that a root of specialization content makes
+`xiRepresentative(T,z)` the zero polynomial. -/
+theorem exists_sourceDerivativePolynomialNumerator
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K)
+    (factor : BivariatePolynomial K) (x₀ : K)
+    (ell DR d b tau : Nat)
+    (factorNeZero : factor ≠ 0)
+    (globalBound : ParentCoefficientBound parent ell DR)
+    (tauEq : tau = b + ell)
+    (wLeB : factor.leadingCoeff.natDegree ≤ b)
+    (dPositive : 1 ≤ d)
+    (factorDvd : factor ∣ specializeX x₀ parent)
+    (specializedDegreeLe : (specializeX x₀ parent).natDegree ≤ d) :
+    ∃ xiRepresentative : BivariatePolynomial K,
+      sourceClearedRepresentative parent x₀ 0 d 1
+          (fun j ↦ (j : K)) factor.leadingCoeff =
+        Polynomial.C factor.leadingCoeff * xiRepresentative ∧
+      weight tau xiRepresentative ≤
+        (sourceSigma DR ell d b factor.leadingCoeff.natDegree : Nat) := by
+  let cleared := sourceClearedRepresentative parent x₀ 0 d 1
+    (fun j ↦ (j : K)) factor.leadingCoeff
+  let ceiling := sourceMu DR ell d b
+  have qLeD : 1 ≤ d := dPositive
+  have clearedWeight : weight tau cleared ≤ (ceiling : WithBot Nat) := by
+    simpa [cleared, ceiling, sourceMu] using
+      sourceClearedRepresentative_weight_le parent x₀ ell DR d b tau 0 1
+        (fun j ↦ (j : K)) factor.leadingCoeff globalBound tauEq wLeB qLeD
+  have clearedDvd : Polynomial.C factor.leadingCoeff ∣ cleared := by
+    exact leadingCoeff_dvd_sourceClearedRepresentative_zero parent factor x₀
+      d 1 (fun j ↦ (j : K)) qLeD factorDvd specializedDegreeLe
+  obtain ⟨xiRepresentative, representativeEq⟩ := clearedDvd
+  refine ⟨xiRepresentative, by simpa [cleared] using representativeEq, ?_⟩
+  by_cases representativeZero : xiRepresentative = 0
+  · simp [representativeZero]
+  have leadingNeZero : factor.leadingCoeff ≠ 0 :=
+    Polynomial.leadingCoeff_ne_zero.mpr factorNeZero
+  have productBound := clearedWeight
+  rw [representativeEq,
+    weight_C_mul_natDegree tau leadingNeZero,
+    weight_eq_coe tau representativeZero] at productBound
+  have naturalBound : factor.leadingCoeff.natDegree +
+      localBivariateWeight tau xiRepresentative ≤ ceiling :=
+    WithBot.coe_le_coe.mp productBound
+  rw [weight_eq_coe tau representativeZero]
+  exact WithBot.coe_le_coe.mpr (by
+    simpa [sourceSigma, ceiling] using
+      Nat.le_sub_of_add_le (by omega :
+        localBivariateWeight tau xiRepresentative +
+          factor.leadingCoeff.natDegree ≤ ceiling))
+
 /-- Specializing the auxiliary theorem to `s=0,q=1` constructs the source
 derivative numerator and proves `Λ(ξ) ≤ σ`. -/
 theorem exists_sourceDerivativeNumerator
@@ -928,6 +981,7 @@ theorem corrected_source_hensel_estimate
 #print axioms sourceClearedRepresentative_weight_le
 #print axioms leadingCoeff_dvd_sourceClearedRepresentative_zero
 #print axioms exists_sourceAuxiliaryNumerator
+#print axioms exists_sourceDerivativePolynomialNumerator
 #print axioms exists_sourceDerivativeNumerator
 #print axioms sourceNumeratorCeiling_eq
 #print axioms source_recurrence_term_ceiling
