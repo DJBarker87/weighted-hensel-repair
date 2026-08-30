@@ -2,12 +2,22 @@
 
 [![Formal verification](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml/badge.svg)](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml)
 
-**Paper:** *Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
-Decodability*
+Standalone Lean 4 verification artifact accompanying
+*Correcting the Weighted Hensel Estimate for Reed–Solomon Curve Decodability.*
 
-**Verification artifact:** the `.lean` sources in this standalone repository.
-The replay script prints the exact checked-out commit so a paper or referee
-report can pin the reviewed state without inventing a manuscript version.
+The `.lean` sources are authoritative. The paper is mathematically
+self-contained; this repository supplies an independent machine-checked
+verification of its named results.
+
+## Canonical paper artifact
+
+The release identifier `paper-v1.0` is reserved for the verification artifact
+corresponding to ePrint Version 1 of the paper. The release records the exact
+Git commit and can be replayed with:
+
+```sh
+./scripts/verify.sh
+```
 
 ## One-command verification
 
@@ -30,8 +40,8 @@ downloaded `.olean` files are only a Mathlib build cache.
 | Swap | none required |
 | Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
 
-The script prints the exact checked-out commit. An ePrint link and immutable
-archive identifier can be added after the manuscript receives them.
+The script prints the exact checked-out commit. An ePrint identifier or archive
+DOI will be added only after it is actually issued.
 
 ## Headline results
 
@@ -73,9 +83,8 @@ through `Y^(p^f)`, both global degree ledgers, sparse exact truncation,
 compatible Frobenius roots, inverse-Frobenius recovery, the rooted second
 resultant, source reindexing, and final line interpolation.
 
-The development depends only on Lean and Mathlib. It does not import Aspis or
-formalize any protocol, compiler, cryptographic primitive, or deployment
-machinery.
+The development depends only on Lean and Mathlib. It does not formalize any
+protocol, compiler, cryptographic primitive, or deployment machinery.
 
 ## Verification status
 
@@ -89,12 +98,10 @@ Classical.choice
 Quot.sound
 ```
 
-The current Lean head machine-checks every substantive mathematical result in
-the supplied Revision 16 PDF, including Corollary 7.11. Revision 16 itself
-predates that completion and therefore understates Lean coverage in its
-formal-verification section and conclusion. The exact reconciliation and the
-paper theorem/numbering ledger, together with the sentences that the
-forthcoming paper version must update, are recorded in
+The release surface is aligned with Paper Version 1. Every substantive
+mathematical theorem in that version has an identified Lean counterpart,
+including the complete inseparable Frobenius extension of Corollary 7.11. The
+theorem and section correspondence is recorded in
 [PAPER_ALIGNMENT.md](PAPER_ALIGNMENT.md).
 
 Proposition 7.10 uses separability after specializing `X = x₀`. Generic
@@ -304,10 +311,10 @@ algorithm that discovers the factors.
 
 ## Independence and audit discipline
 
-Aspis was consulted only for reusable mathematical proof patterns. There is
-no Aspis dependency and no application-specific API in this repository.
+This standalone repository depends only on Lean and Mathlib. It has no
+application-specific API or external project dependency.
 
-The source audit used for release is:
+The canonical release audit is:
 
 ```sh
 git diff --check

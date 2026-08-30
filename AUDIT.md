@@ -29,11 +29,11 @@ derivative is nonzero. Consequently `full_factor_degree_transfer` no longer
 takes branchwise derivative nonvanishing as a separate hypothesis; it derives
 it before constructing the pole/resultant exceptional sets.
 
-**Status:** closed and proved. The standalone proposition should make the
-Step 2 choice explicit, but there is no gap in the BCHKS26 argument and no
-remaining C–E obligation in this development.
+**Status:** closed and proved. Paper Version 1 and the formal proposition state
+the Step 2 specialized-separability condition explicitly. There is no gap in
+the BCHKS26 argument and no remaining C–E obligation in this development.
 
-## Revision 16 completion audit
+## Paper Version 1 completion audit
 
 The theorem-by-theorem comparison, including a separate ledger for the
 inseparable Frobenius proof, is recorded in
@@ -42,9 +42,9 @@ inseparable Frobenius proof, is recorded in
 with the fixed-branch line theorem in
 `separable_full_factor_curve_decodability`.
 
-Revision 16's statements that the inseparable extension is not formalized now
-understate the repository. They are documentary alignment items for the next
-paper version, not mathematical obstructions.
+The mathematical coverage is complete for Paper Version 1. Remaining release
+work is documentation and archival bookkeeping, not a mathematical
+obstruction.
 
 **Current classification:** no unclosed A–E obligations. In particular, there
 are no unclosed C, D, or E items and no assumptions introduced solely to make
