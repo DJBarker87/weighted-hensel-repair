@@ -1,5 +1,54 @@
 # Correcting the Weighted Hensel Estimate
 
+## One-command verification
+
+```sh
+git clone https://github.com/DJBarker87/weighted-hensel-repair.git
+cd weighted-hensel-repair
+./scripts/verify.sh
+```
+
+The script is a transparent wrapper around `lake build
+WeightedHensel.Terminal`, `lake env lean Main.lean`, and source-hygiene scans.
+The `.lean` sources are the authoritative artifact.
+
+| Replay datum | Expected value |
+| --- | ---: |
+| Clean replay | about 1 minute |
+| Peak RSS | about 6.5 GiB |
+| Swap | none required |
+| Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
+| Archival release | `v1.0-eprint` |
+
+The script prints the exact checked-out commit. The release tag identifies the
+immutable ePrint artifact.
+
+## Headline results
+
+| Result | Lean theorem |
+| --- | --- |
+| Direct correction of source recurrence | `corrected_source_hensel_estimate` |
+| Division-free recurrence | `division_free_hensel_estimate` |
+| Weighted resultant zero count | `weighted_resultant_zero_count` |
+| Fixed-branch curve conclusion | `fixed_branch_curve_decodability` |
+| Full-factor transfer with BCHKS26 Step 2 separability | `full_factor_degree_transfer` |
+| Degree-28 instance | `concrete_degree28_curve_decodable` |
+| Degree-3 instance | `concrete_degree3_curve_decodable` |
+
+`Main.lean` is the human-readable front door: it `#check`s these seven
+declarations and prints each axiom report.
+
+## Trust boundary
+
+The generic results take polynomial factorizations, branch data, roots,
+degree bounds, separability/nonvanishing conditions, agreement data, and
+cardinality inequalities as explicit theorem inputs. The concrete modules
+discharge the stated numerical parameter calculations and list-size bounds;
+they do not claim an executable decoder or an algorithm for discovering
+factorizations.
+
+## Scope
+
 This is a standalone Lean 4 verification artifact for Revision 14 of
 *Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
 Decodability*. It formalizes the polynomial weight, monicization, regular
@@ -24,13 +73,13 @@ Classical.choice
 Quot.sound
 ```
 
-There is one paper-level qualification. Proposition 7.10 uses separability
-after specializing `X = x₀`, but generic separability of `Rᵢ` does not imply
-separability at an arbitrary specialization. The formal theorem therefore
-states the exact nonvanishing condition on the specialized regular derivative.
-This is classification **C-001** in [AUDIT.md](AUDIT.md): the proposition is
-repairable, and the repaired statement is proved, but the missing operative
-hypothesis is not hidden.
+Proposition 7.10 uses separability after specializing `X = x₀`. Generic
+separability alone would not imply this, but BCHKS26 Step 2 explicitly chooses
+`x₀` so that every `Rᵢ(x₀,Y,Z)` remains separable over `K(Z)`. The formal
+theorem states that source hypothesis and proves that it implies nonvanishing
+of the intrinsic regular derivative on every irreducible branch. The
+standalone wording issue in Revision 14 is recorded as closed **C-001** in
+[AUDIT.md](AUDIT.md); it is not a gap in the 2026 argument.
 
 ## Toolchain and replay
 
@@ -41,16 +90,20 @@ The repository pins:
 - the exact Mathlib commit and transitive dependencies in
   `lake-manifest.json`.
 
-From a clean checkout:
+The canonical clean-checkout replay is:
+
+```sh
+./scripts/verify.sh
+```
+
+Reviewers who prefer the underlying commands can run:
 
 ```sh
 lake build WeightedHensel.Terminal
-lake build
+lake env lean Main.lean
 ```
 
-The first command checks all paper-level terminal theorems. The second checks
-the whole library. `Main.lean` imports `WeightedHensel.Terminal` as a minimal
-top-level replay target.
+An optional `lake build` checks the full library target as well.
 
 ## Mathematical representation
 
@@ -108,7 +161,8 @@ mathematical fact in a single statement.
 | Specialization content and branch degree sums | `specialization_content_branch_weight_summation`, `specialization_branch_yDegree_summation` | proved |
 | Pairwise factor-degree summation | `factor_square_weight_sum_le_global`, `factor_branch_pair_weight_sum_le` | proved |
 | Content roots charged to the derivative resultant | `specialization_content_dvd_clearedDerivativeRepresentative`, `card_content_root_specializations_lt_pole_budget` | proved |
-| 2026 full-factor summation, Proposition 7.10 | `full_factor_degree_transfer` | proved with explicit C-001 repair |
+| Specialized-parent separability implies branch derivative nonvanishing | `regularDerivativeElement_ne_zero_of_specialized_separable` | proved |
+| 2026 full-factor summation, Proposition 7.10 | `full_factor_degree_transfer` | proved from the explicit BCHKS26 Step 2 hypothesis |
 | Exact degree-28 Guruswami–Sudan cap | `degree28_guruswamiSudan_list_card_le_100` | proved |
 | Exact degree-3 Guruswami–Sudan cap | `degree3_guruswamiSudan_list_card_le_99` | proved |
 | Separate analytic list parameters 112 and 113 | `degree28_rateOnlyListExpression_eq_112`, `degree3_rateOnlyListExpression_lt_113` | proved |
@@ -189,8 +243,10 @@ in the concrete analytic calculations. No executable decoder is claimed.
 
 The generic theorems take the paper's operative algebraic data as explicit
 hypotheses: polynomial factorizations, irreducibility, branch roots,
-nonvanishing leading coefficients and regular derivatives, degree bounds,
-candidate-root identities, agreement supports, and cardinality inequalities.
+specialized-parent separability for the full-factor transfer, nonvanishing
+leading coefficients and regular derivatives for the fixed-branch interface,
+degree bounds, candidate-root identities, agreement supports, and cardinality
+inequalities.
 The development proves the consequences of those hypotheses; it does not
 formalize the cited papers' interpolation-polynomial construction or an
 algorithm that discovers the factors.
@@ -209,5 +265,6 @@ lake build WeightedHensel.Terminal
 lake build
 ```
 
-See [AUDIT.md](AUDIT.md) for every classification C–E. At this revision the
-only such item is C-001.
+See [AUDIT.md](AUDIT.md) for classifications C–E. C-001 is closed by exposing
+the separability condition already imposed in BCHKS26 Step 2; there are no
+unclosed C–E obligations.

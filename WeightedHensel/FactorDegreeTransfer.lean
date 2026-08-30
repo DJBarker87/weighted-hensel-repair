@@ -5,6 +5,7 @@ Authors: Dominic Barker
 -/
 
 import WeightedHensel.CoarseBounds
+import WeightedHensel.PowerSeriesLift
 import WeightedHensel.ResultantBound
 import WeightedHensel.Specialization
 import Mathlib.Algebra.Polynomial.BigOperators
@@ -1896,9 +1897,12 @@ theorem full_factor_degree_transfer_from_content_root_sets
   exact coefficientBound x₀ order yExponent coefficientNeZero
 
 /-- Proposition 7.10 from its polynomial factorization and successful
-challenge hypotheses.  The proof constructs the discard set, the disjoint
-factor/branch assignment, every local pole/resultant set, and the final
-genuine simple surviving branch. -/
+challenge hypotheses. The `specializedSeparable` hypothesis is exactly the
+choice made in Step 2 of BCHKS26: every positive-`Y`-degree specialization
+`Rᵢ(x₀,Y,Z)` remains separable over `K(Z)`. The proof derives nonvanishing of
+the intrinsic regular derivative on every irreducible branch, constructs the
+discard set, the disjoint factor/branch assignment, every local
+pole/resultant set, and the final genuine simple surviving branch. -/
 theorem full_factor_degree_transfer
     {K ι κ : Type*} [Field K] [DecidableEq K]
     [DecidableEq ι] [DecidableEq κ]
@@ -1928,10 +1932,8 @@ theorem full_factor_degree_transfer
     (specializationFactorization : ∀ index ∈ indices,
       specializeX x₀ (parent index) = Polynomial.C (content index) *
         ∏ branchIndex ∈ branchIndices index, branch index branchIndex)
-    (etaNeZero : ∀ index ∈ activeFactorIndices indices branchIndices,
-      ∀ branchIndex ∈ branchIndices index,
-        regularDerivativeElement (parent index) (branch index branchIndex) x₀
-          (parent index).natDegree ≠ 0)
+    (specializedSeparable : ∀ index ∈ indices,
+      (branchPolynomial (specializeX x₀ (parent index))).Separable)
     (QYDegree : Q.natDegree ≤ DY)
     (QWeightedDegree : fullYZWeightedDegree 1 Q ≤ DZ)
     (globalMultiplierPositive : 1 ≤ 2 * DX * DY ^ 2)
@@ -2059,6 +2061,20 @@ theorem full_factor_degree_transfer
     exact dvd_mul_of_dvd_right
       (Finset.dvd_prod_of_mem (branch index) branchIndexMem)
       (Polynomial.C (content index))
+  have etaNeZero : ∀ index ∈ active,
+      ∀ branchIndex ∈ branchIndices index,
+        regularDerivativeElement (parent index) (branch index branchIndex) x₀
+          (parent index).natDegree ≠ 0 := by
+    intro index indexMem branchIndex branchIndexMem
+    have indexInIndices : index ∈ indices :=
+      (Finset.mem_filter.mp indexMem).1
+    exact regularDerivativeElement_ne_zero_of_specialized_separable
+      (parent index) (branch index branchIndex)
+      (branchIrreducible index indexInIndices branchIndex branchIndexMem)
+      (branchPositive index indexInIndices branchIndex branchIndexMem)
+      x₀ (parent index).natDegree le_rfl
+      (factorDvd index indexMem branchIndex branchIndexMem)
+      (specializedSeparable index indexInIndices)
   let localData (index : ι) (indexMem : index ∈ active)
       (branchIndex : κ) (branchIndexMem : branchIndex ∈ branchIndices index) :=
     poleResultantExceptionalData (parent index)

@@ -635,6 +635,111 @@ theorem functionFieldShiftedParent_derivative_ne_zero
   exact (regularToFunctionField_ne_zero factor factorNeZero factorPositive
     etaNeZero) mappedEtaZero
 
+/-- Separability of the specialized parent over `K(Z)` supplies the
+nonvanishing intrinsic regular derivative required on every irreducible
+branch divisor. This is the explicit Step 2 hypothesis in BCHKS26.
+
+The proof first transports separability to the selected branch field. The
+branch root is then a simple root of the specialized parent, while the
+cleared-derivative identity differs from its literal derivative value only
+by a nonzero power of the branch leading coefficient. -/
+theorem regularDerivativeElement_ne_zero_of_specialized_separable
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K)
+    (factor : BivariatePolynomial K)
+    (factorIrreducible : Irreducible factor)
+    (factorPositive : 0 < factor.natDegree)
+    (x₀ : K) (d : Nat) (parentDegreeLe : parent.natDegree ≤ d)
+    (factorDvd : factor ∣ specializeX x₀ parent)
+    (specializedSeparable :
+      (branchPolynomial (specializeX x₀ parent)).Separable) :
+    regularDerivativeElement parent factor x₀ d ≠ 0 := by
+  letI : Fact (Irreducible (branchPolynomial factor)) :=
+    ⟨branchPolynomial_irreducible factor factorIrreducible factorPositive⟩
+  let rootMap : RationalFunctionField K →+* BranchFunctionField factor :=
+    AdjoinRoot.of (branchPolynomial factor)
+  let root : BranchFunctionField factor :=
+    AdjoinRoot.root (branchPolynomial factor)
+  let specializedParent : Polynomial (BranchFunctionField factor) :=
+    (specializeX x₀ parent).map (regularCoefficientMap factor)
+  have mapEq :
+      (branchPolynomial (specializeX x₀ parent)).map rootMap =
+        specializedParent := by
+    dsimp [rootMap, specializedParent]
+    unfold branchPolynomial regularCoefficientMap
+    rw [Polynomial.map_map]
+    rfl
+  have specializedParentSeparable : specializedParent.Separable := by
+    rw [← mapEq]
+    exact specializedSeparable.map
+  have specializedParentRoot : specializedParent.eval root = 0 := by
+    unfold specializedParent
+    rw [Polynomial.eval_map]
+    obtain ⟨quotient, factorization⟩ := factorDvd
+    rw [factorization, Polynomial.eval₂_mul,
+      branchPolynomial_eval₂_root, zero_mul]
+  have derivativeAtRootNeZero :
+      specializedParent.derivative.eval root ≠ 0 := by
+    have value := specializedParentSeparable.eval₂_derivative_ne_zero
+      (RingHom.id (BranchFunctionField factor)) specializedParentRoot
+    simpa using value
+  have derivativeIdentity :
+      specializedDerivativeValue (functionFieldParent parent factor)
+          (branchBaseMap factor x₀) (branchChallenge factor)
+          (PowerSeries.C root) d =
+        specializedParent.derivative.eval root := by
+    rw [specializedDerivativeValue_eq_constantCoeff_derivative
+      (functionFieldParent parent factor) (branchBaseMap factor x₀)
+      (branchChallenge factor) root d
+      ((functionFieldParent_natDegree_le parent factor).trans parentDegreeLe)]
+    calc
+      PowerSeries.constantCoeff
+          ((specializedShiftedParent (functionFieldParent parent factor)
+              (branchBaseMap factor x₀) (branchChallenge factor)).derivative.eval
+            (PowerSeries.C root)) =
+          PowerSeries.constantCoeff
+            ((specializedShiftedParent
+                (Polynomial.derivative (functionFieldParent parent factor))
+                (branchBaseMap factor x₀) (branchChallenge factor)).eval
+              (PowerSeries.C root)) := by
+            congr 2
+            simp [specializedShiftedParent]
+      _ = (specializeX (branchBaseMap factor x₀)
+              (Polynomial.derivative (functionFieldParent parent factor))).eval₂
+            (Polynomial.evalRingHom (branchChallenge factor)) root :=
+          constantCoeff_specializedShiftedParent_eval_C
+            (Polynomial.derivative (functionFieldParent parent factor))
+            (branchBaseMap factor x₀) (branchChallenge factor) root
+      _ = (Polynomial.derivative
+              (specializeX (branchBaseMap factor x₀)
+                (functionFieldParent parent factor))).eval₂
+            (Polynomial.evalRingHom (branchChallenge factor)) root := by
+          simp [specializeX]
+      _ = (Polynomial.derivative
+              ((specializeX (branchBaseMap factor x₀)
+                (functionFieldParent parent factor)).map
+                  (Polynomial.evalRingHom (branchChallenge factor)))).eval root := by
+          rw [Polynomial.derivative_map, Polynomial.eval_map]
+      _ = specializedParent.derivative.eval root := by
+          rw [functionField_specializeX_map]
+  intro etaZero
+  have imageZero : regularToFunctionField factor factorPositive
+      (regularDerivativeElement parent factor x₀ d) = 0 := by
+    rw [etaZero, map_zero]
+  have imageIdentity := regularToFunctionField_regularDerivativeElement
+    parent factor factorPositive x₀ d (PowerSeries.C root) (by simp [root])
+  rw [imageZero, derivativeIdentity] at imageIdentity
+  have leadingNeZero : regularToFunctionField factor factorPositive
+      (regularLeadingCoefficient factor) ≠ 0 := by
+    simp only [regularLeadingCoefficient, regularToFunctionField_of]
+    have leadingNe : factor.leadingCoeff ≠ 0 :=
+      Polynomial.leadingCoeff_ne_zero.mpr factorIrreducible.ne_zero
+    have mappedNe := (regularCoefficientMap_injective factor factorPositive).ne
+      leadingNe
+    simpa using mappedNe
+  exact derivativeAtRootNeZero
+    ((mul_eq_zero.mp imageIdentity.symm).resolve_left
+      (pow_ne_zero _ leadingNeZero))
+
 /-- The selected simple branch has an exact characteristic-free
 power-series Hensel lift with the prescribed constant coefficient. -/
 theorem exists_functionField_powerSeriesRoot
@@ -770,6 +875,7 @@ theorem parentDivisionFreeCoefficients_image_of_root
 #print axioms eval₂_sourceClearedRepresentative_derivative_map
 #print axioms regularToFunctionField_regularDerivativeElement
 #print axioms functionFieldShiftedParent_derivative_ne_zero
+#print axioms regularDerivativeElement_ne_zero_of_specialized_separable
 #print axioms exists_functionField_powerSeriesRoot
 #print axioms regularToFunctionField_parentDivisionFreeCoefficient
 #print axioms parentDivisionFreeCoefficients_image_of_root
