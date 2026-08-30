@@ -27,7 +27,7 @@ echo "=== Fetching the pinned Mathlib build cache ==="
 
 echo
 echo "=== Building terminal theorem dependency graph ==="
-"${lake_command[@]}" build WeightedHensel.Terminal:olean
+"${lake_command[@]}" build WeightedHensel.Terminal
 
 echo
 echo "=== Replaying headline theorem and axiom report ==="
