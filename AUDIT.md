@@ -42,9 +42,10 @@ inseparable Frobenius proof, is recorded in
 with the fixed-branch line theorem in
 `separable_full_factor_curve_decodability`.
 
-The mathematical coverage is complete for Paper Version 1. Remaining release
-work is documentation and archival bookkeeping, not a mathematical
-obstruction.
+The mathematical coverage is complete for Paper Version 1. The
+`paper-v1.0.1` release is an archival-only patch: it corrects the PDF's release
+references and repository metadata while leaving every Lean declaration and
+proof unchanged. The earlier `paper-v1.0` snapshot is superseded.
 
 **Current classification:** no unclosed A–E obligations. In particular, there
 are no unclosed C, D, or E items and no assumptions introduced solely to make

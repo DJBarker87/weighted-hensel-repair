@@ -11,9 +11,11 @@ verification of its named results.
 
 ## Canonical paper artifact
 
-The release identifier `paper-v1.0` is reserved for the verification artifact
-corresponding to ePrint Version 1 of the paper. The release records the exact
-Git commit and can be replayed with:
+The annotated release
+[`paper-v1.0.1`](https://github.com/DJBarker87/weighted-hensel-repair/releases/tag/paper-v1.0.1)
+is the canonical verification artifact corresponding to ePrint Version 1 of
+the paper. The release tag records the exact Git commit and can be replayed
+with:
 
 ```sh
 ./scripts/verify.sh
@@ -21,6 +23,11 @@ Git commit and can be replayed with:
 
 The corresponding manuscript is included as the
 [Paper Version 1 PDF](Correcting_the_Weighted_Hensel_Estimate_for_Reed_Solomon_Curve_Decodability_Paper_Version_1.pdf).
+
+This archival patch supersedes `paper-v1.0`. It changes only the manuscript's
+archival references and repository metadata; the Lean mathematical state is
+unchanged. Zenodo archives the release series under the stable concept DOI
+[`10.5281/zenodo.22180553`](https://doi.org/10.5281/zenodo.22180553).
 
 ## One-command verification
 
@@ -43,8 +50,8 @@ downloaded `.olean` files are only a Mathlib build cache.
 | Swap | none required |
 | Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
 
-The script prints the exact checked-out commit. An ePrint identifier or archive
-DOI will be added only after it is actually issued.
+The script prints the exact checked-out commit. An ePrint identifier will be
+added only after it is actually issued.
 
 ## Headline results
 

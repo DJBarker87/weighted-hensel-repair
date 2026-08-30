@@ -15,11 +15,14 @@ numbering rather than by a development filename. Documentary and bibliographic
 statements are outside the formal-proof claim.
 
 The manuscript records the checked Lean mathematical state
-`f237d80eafdfbb8fdf5a3464e65510c824452bd5`. The canonical `paper-v1.0`
+`f237d80eafdfbb8fdf5a3464e65510c824452bd5`. The canonical `paper-v1.0.1`
 release is a descendant of that commit containing only archival documentation
-and the Version 1 PDF; it does not alter any Lean theorem statement or proof.
-The release tag, rather than mutable `main`, records the exact archival commit.
-No PDF hash or self-referential release commit is embedded here.
+and the corrected Version 1 PDF; it does not alter any Lean theorem statement
+or proof. The release tag, rather than mutable `main`, records the exact
+archival commit. Zenodo archives the release series under the stable concept
+DOI [`10.5281/zenodo.22180553`](https://doi.org/10.5281/zenodo.22180553).
+The earlier `paper-v1.0` snapshot is superseded. No PDF hash or
+self-referential release commit is embedded here.
 
 Corollary 7.11 is stated with `k ≥ 1`, and its local parameters are
 `D_R = D_H = G_i` and `ℓ = q_i = p^(f_i)`.
