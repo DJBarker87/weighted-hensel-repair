@@ -16,3 +16,7 @@ import WeightedHensel.Interpolation
 import WeightedHensel.FixedBranch
 import WeightedHensel.CoarseBounds
 import WeightedHensel.FactorDegreeTransfer
+import WeightedHensel.JohnsonBound
+import WeightedHensel.CurveDecodability
+import WeightedHensel.ConcreteParameters
+import WeightedHensel.Terminal
