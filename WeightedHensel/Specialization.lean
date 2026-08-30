@@ -629,6 +629,32 @@ theorem parentDivisionFreeCoefficients_weight_le
     generatorWeightEq globalBound tauEq ellLeDR dPositive ellDLeDR
     (parentDivisionFreeTerms_j_le d order orderPositive index indexMem) wLeB
 
+/-- Natural-number form of the canonical coefficient bound, used by the
+resultant zero-count interface. -/
+theorem parentDivisionFreeCoefficients_weightNat_le
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K)
+    (factor : BivariatePolynomial K) (x₀ : K)
+    (ell DH DR d b tau : Nat)
+    (factorNeZero : factor ≠ 0)
+    (factorCoefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + ell * exponent ≤ DH)
+    (generatorWeightEq : DH + ell - ell * factor.natDegree = tau)
+    (globalBound : ParentCoefficientBound parent ell DR)
+    (tauEq : tau = b + ell) (ellLeDR : ell ≤ DR)
+    (dPositive : 1 ≤ d) (ellDLeDR : ell * d ≤ DR)
+    (wLeB : factor.leadingCoeff.natDegree ≤ b) (t : Nat) :
+    regularWeightNat factor factorNeZero tau
+        (parentDivisionFreeCoefficients parent factor x₀ d t) ≤
+      divisionFreeCeiling tau (sourceMu DR ell d b) t := by
+  let delta := parentDivisionFreeCoefficients parent factor x₀ d t
+  by_cases deltaZero : delta = 0
+  · simp [delta, deltaZero]
+  · have bounded := parentDivisionFreeCoefficients_weight_le parent factor x₀
+      ell DH DR d b tau factorNeZero factorCoefficientBound generatorWeightEq
+      globalBound tauEq ellLeDR dPositive ellDLeDR wLeB t
+    rw [regularWeight_eq_coe factor factorNeZero tau deltaZero] at bounded
+    exact WithBot.coe_le_coe.mp bounded
+
 /-- Scalar value of one bounded raw parent tuple at a candidate series. -/
 def boundedRawTermValue
     {K : Type*} [Field K] (parent : TrivariatePolynomial K)
@@ -1443,6 +1469,7 @@ theorem branchSpecialization_parentDivisionFreeCoefficients
 #print axioms fullParentTermSum_eq_coeff_eval
 #print axioms specializedParent_coefficient_recurrence
 #print axioms parentDivisionFreeCoefficients_weight_le
+#print axioms parentDivisionFreeCoefficients_weightNat_le
 #print axioms branchSpecialization_regularDerivativeElement
 #print axioms branchSpecialization_parentDivisionFreeCoefficients
 

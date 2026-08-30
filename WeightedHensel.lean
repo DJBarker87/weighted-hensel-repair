@@ -10,3 +10,4 @@ import WeightedHensel.ResultantBound
 import WeightedHensel.Specialization
 import WeightedHensel.PowerSeriesLift
 import WeightedHensel.Truncation
+import WeightedHensel.CommonNumerator
