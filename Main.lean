@@ -1,7 +1,8 @@
 import WeightedHensel.Terminal
 
 /-!
-Human-readable replay entry point for the nine paper-level terminal results.
+Human-readable replay entry point for seven paper conclusions and two
+supplementary numerical instances.
 -/
 
 open WeightedHensel

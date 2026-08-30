@@ -19,6 +19,9 @@ Git commit and can be replayed with:
 ./scripts/verify.sh
 ```
 
+The corresponding manuscript is included as the
+[Paper Version 1 PDF](Correcting_the_Weighted_Hensel_Estimate_for_Reed_Solomon_Curve_Decodability_Paper_Version_1.pdf).
+
 ## One-command verification
 
 ```sh
@@ -54,8 +57,8 @@ DOI will be added only after it is actually issued.
 | Full-factor transfer with BCHKS26 Step 2 separability | `full_factor_degree_transfer` |
 | Separable global-to-curve composition | `separable_full_factor_curve_decodability` |
 | Inseparable Frobenius extension, Corollary 7.11 | `inseparable_frobenius_curve_decodability` |
-| Degree-28 instance | `concrete_degree28_curve_decodable` |
-| Degree-3 instance | `concrete_degree3_curve_decodable` |
+| Supplementary degree-28 instance | `concrete_degree28_curve_decodable` |
+| Supplementary degree-3 instance | `concrete_degree3_curve_decodable` |
 
 `Main.lean` is the human-readable front door: it `#check`s these nine
 declarations and prints each axiom report.
@@ -75,8 +78,9 @@ This is a standalone Lean 4 verification artifact for *Correcting the
 Weighted Hensel Estimate for Reed–Solomon Curve Decodability*. It formalizes
 the polynomial weight, monicization, regular quotient, both repaired Hensel
 recurrences, both resultant arguments, specialization, truncation,
-interpolation, fixed-branch completion, the 2026 full-factor transfer, the
-paper's counterexamples, and both numerical Reed–Solomon instances.
+interpolation, fixed-branch completion, the 2026 full-factor transfer, and the
+paper's counterexamples. It retains two supplementary numerical Reed–Solomon
+instances that are not used by any theorem in the paper.
 
 It also formalizes the complete inseparable Frobenius extension: factorization
 through `Y^(p^f)`, both global degree ledgers, sparse exact truncation,
@@ -155,7 +159,9 @@ arbitrary elements of `BranchFunctionField factor`.
 
 The table names the principal declaration for each result. Several rows also
 list supporting declarations where the paper combines more than one
-mathematical fact in a single statement.
+mathematical fact in a single statement. The concrete parameter rows at the
+end are supplementary artifact checks rather than dependencies of a paper
+theorem.
 
 | Paper result | Lean declaration | Status |
 | --- | --- | --- |
@@ -215,8 +221,9 @@ The two concrete terminal theorems instantiate the fixed-branch completion
 with the exact numerical allowances and GRS normalization. The independent
 global factor-selection bookkeeping is `full_factor_degree_transfer`, and
 `separable_full_factor_curve_decodability` composes it with the local curve
-theorem. The repository does not disguise these results as an executable
-decoder.
+theorem. The concrete instances are supplementary and are not used by any
+theorem in Paper Version 1. The repository does not disguise these results as
+an executable decoder.
 
 ## Module guide
 
@@ -252,8 +259,8 @@ decoder.
 | `FrobeniusCorollary` | Complete Corollary 7.11 composition |
 | `JohnsonBound` | Exact finite incidence/list-cardinality inequality |
 | `CurveDecodability` | GRS normalization and multiplier restoration |
-| `ConcreteParameters` | Both exact numerical parameter columns |
-| `Terminal` | Nine paper-level terminal declarations and axiom reports |
+| `ConcreteParameters` | Supplementary exact numerical parameter checks |
+| `Terminal` | Seven paper conclusions, two supplementary instances, and axiom reports |
 
 ## Terminal declarations
 
@@ -271,7 +278,7 @@ concrete_degree28_curve_decodable
 concrete_degree3_curve_decodable
 ```
 
-## Concrete values
+## Supplementary concrete values
 
 | Parameter | Degree-28 combination | Degree-3 fold |
 | --- | ---: | ---: |

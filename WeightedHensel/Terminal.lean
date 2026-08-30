@@ -9,16 +9,17 @@ import WeightedHensel.FrobeniusCorollary
 import WeightedHensel.SeparableCorollary
 
 /-!
-# Paper-level terminal results
+# Terminal verification results
 
 The terminal dependency graph includes both global-to-local factor paths:
 the separable Proposition 7.10 composition and the inseparable Frobenius
-extension of Corollary 7.11.  The two concrete theorems below instantiate
-the generic fixed-branch theorem
-with every numerical table entry.  Their `challenges` argument is the
-surviving good-challenge set; the ambient universes `Kˣ` and `K` are checked
-separately in `ConcreteParameters`.  GRS words are normalized on entry and
-their nonzero multipliers are restored in the conclusion.
+extension of Corollary 7.11.  Seven terminal declarations correspond directly
+to paper conclusions.  The two supplementary concrete theorems below
+instantiate the generic fixed-branch theorem with every numerical table
+entry.  Their `challenges` argument is the surviving good-challenge set; the
+ambient universes `Kˣ` and `K` are checked separately in
+`ConcreteParameters`.  GRS words are normalized on entry and their nonzero
+multipliers are restored in the conclusion.
 -/
 
 set_option autoImplicit false
