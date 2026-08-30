@@ -72,6 +72,17 @@ def polynomialFrobeniusRoot
       polynomial.natDegree := by
   exact Polynomial.natDegree_map_eq_of_injective
     (iterateFrobeniusEquiv K p f).symm.injective polynomial
+/-- The unique inverse-Frobenius root in a finite field raises back to the
+original scalar. -/
+@[simp] theorem frobeniusRoot_pow
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p] (value : K) :
+    ((iterateFrobeniusEquiv K p f).symm value) ^ frobeniusPower p f =
+      value := by
+  unfold frobeniusPower
+  change iterateFrobenius K p f
+      ((iterateFrobeniusEquiv K p f).symm value) = value
+  exact (iterateFrobeniusEquiv K p f).apply_symm_apply value
 
 /-- Inverse Frobenius followed by the `q`-th power gives the sparse
 expansion of the original polynomial. -/
@@ -92,6 +103,112 @@ theorem polynomialFrobeniusRoot_pow
     exact (iterateFrobeniusEquiv K p f).apply_symm_apply value
   rw [composition, Polynomial.map_id] at mapped
   exact mapped.symm
+
+/-- Evaluation commutes with taking the coefficientwise inverse-Frobenius
+root, provided the evaluation point is also raised to the Frobenius power. -/
+theorem eval_polynomialFrobeniusRoot_pow
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : Polynomial K) (value : K) :
+    (polynomialFrobeniusRoot p f polynomial).eval value ^
+        frobeniusPower p f =
+      polynomial.eval (value ^ frobeniusPower p f) := by
+  rw [← Polynomial.eval_pow, polynomialFrobeniusRoot_pow,
+    Polynomial.expand_eval]
+
+/-- Coefficientwise inverse Frobenius as an automorphism of the univariate
+polynomial ring. -/
+def polynomialFrobeniusRootEquiv
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p] :
+    Polynomial K ≃+* Polynomial K :=
+  Polynomial.mapEquiv (iterateFrobeniusEquiv K p f).symm
+
+@[simp] theorem polynomialFrobeniusRootEquiv_apply
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : Polynomial K) :
+    polynomialFrobeniusRootEquiv p f polynomial =
+      polynomialFrobeniusRoot p f polynomial := by
+  rfl
+
+/-- Apply inverse Frobenius to every scalar coefficient of a bivariate
+polynomial, leaving both variable exponents unchanged. -/
+def bivariateFrobeniusRoot
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) : BivariatePolynomial K :=
+  polynomial.map (polynomialFrobeniusRootEquiv p f).toRingHom
+
+@[simp] theorem coeff_bivariateFrobeniusRoot
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) (exponent : Nat) :
+    (bivariateFrobeniusRoot p f polynomial).coeff exponent =
+      polynomialFrobeniusRoot p f (polynomial.coeff exponent) := by
+  simp [bivariateFrobeniusRoot]
+
+@[simp] theorem support_bivariateFrobeniusRoot
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) :
+    (bivariateFrobeniusRoot p f polynomial).support =
+      polynomial.support := by
+  exact Polynomial.support_map_of_injective polynomial
+    (polynomialFrobeniusRootEquiv p f).injective
+
+@[simp] theorem natDegree_bivariateFrobeniusRoot
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) :
+    (bivariateFrobeniusRoot p f polynomial).natDegree =
+      polynomial.natDegree := by
+  exact Polynomial.natDegree_map_eq_of_injective
+    (polynomialFrobeniusRootEquiv p f).injective polynomial
+
+/-- Inverse Frobenius does not change any monomial exponent, hence it
+preserves every local weighted degree. -/
+theorem localBivariateWeight_bivariateFrobeniusRoot
+    {K : Type*} [Field K] [Finite K]
+    (p f tWeight : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) :
+    localBivariateWeight tWeight
+        (bivariateFrobeniusRoot p f polynomial) =
+      localBivariateWeight tWeight polynomial := by
+  rw [localBivariateWeight_eq_iteratedBivariateWeight,
+    localBivariateWeight_eq_iteratedBivariateWeight]
+  simp [iteratedBivariateWeight]
+
+/-- Bivariate evaluation after inverse Frobenius becomes the original
+evaluation after raising both inputs to the Frobenius power. -/
+theorem eval₂_bivariateFrobeniusRoot_pow
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (polynomial : BivariatePolynomial K) (z y : K) :
+    (bivariateFrobeniusRoot p f polynomial).eval₂
+          (Polynomial.evalRingHom z) y ^ frobeniusPower p f =
+      polynomial.eval₂
+        (Polynomial.evalRingHom (z ^ frobeniusPower p f))
+        (y ^ frobeniusPower p f) := by
+  unfold bivariateFrobeniusRoot
+  rw [Polynomial.eval₂_map]
+  unfold frobeniusPower
+  change iterateFrobenius K p f
+      (polynomial.eval₂
+        ((Polynomial.evalRingHom z).comp
+          (polynomialFrobeniusRootEquiv p f).toRingHom) y) =
+    polynomial.eval₂ (Polynomial.evalRingHom (z ^ p ^ f)) (y ^ p ^ f)
+  rw [Polynomial.hom_eval₂]
+  congr 1
+  ext coefficient
+  · simp only [RingHom.comp_apply]
+    rw [show (polynomialFrobeniusRootEquiv p f).toRingHom
+          (Polynomial.C coefficient) =
+        Polynomial.C ((iterateFrobeniusEquiv K p f).symm coefficient) by
+          simp [polynomialFrobeniusRootEquiv]]
+    simp only [Polynomial.coe_evalRingHom, Polynomial.eval_C]
+    exact (iterateFrobeniusEquiv K p f).apply_symm_apply coefficient
+  · simp [polynomialFrobeniusRootEquiv, iterateFrobenius_def]
 
 /-- A `q`-th power polynomial has no translated coefficient outside the
 indices divisible by `q`. -/
@@ -180,3 +297,6 @@ theorem polynomial_frobeniusPower_injective
 #print axioms linearChallenge_frobeniusPower
 #print axioms polynomial_frobeniusPower_injective
 
+end
+
+end WeightedHensel
