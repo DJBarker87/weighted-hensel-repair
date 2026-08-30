@@ -11,3 +11,6 @@ import WeightedHensel.Specialization
 import WeightedHensel.PowerSeriesLift
 import WeightedHensel.Truncation
 import WeightedHensel.CommonNumerator
+import WeightedHensel.Incidence
+import WeightedHensel.Interpolation
+import WeightedHensel.FixedBranch

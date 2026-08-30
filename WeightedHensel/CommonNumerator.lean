@@ -451,6 +451,47 @@ theorem branchSpecialization_commonDiscrepancy_eq_zero
     branchSpecialization_regularLeadingCoefficient,
     branchSpecialization_of, agreement, sub_self]
 
+/-- Once the regular discrepancy is identically zero, every valid
+nondegenerate specialization agrees at the coordinate, including branches
+which were not used as incidences in the resultant argument. -/
+theorem candidate_eval_eq_challenge_eval_of_discrepancy_eq_zero
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K)
+    (factor : BivariatePolynomial K)
+    (factorPositive : 0 < factor.natDegree)
+    (x₀ z : K) (candidate : Polynomial K)
+    (localRoot : factor.eval₂ (Polynomial.evalRingHom z)
+      (candidate.eval x₀) = 0)
+    (d m : Nat) (dPositive : 1 ≤ d)
+    (parentDegreeLe : parent.natDegree ≤ d)
+    (candidateRoot : challengeCandidatePolynomial z candidate parent = 0)
+    (candidateDegree : candidate.natDegree ≤ m)
+    (leadingNeZero : factor.leadingCoeff.eval z ≠ 0)
+    (etaImageNeZero :
+      branchSpecialization factor factorPositive x₀ z candidate localRoot
+          (regularDerivativeElement parent factor x₀ d) ≠ 0)
+    (x : K) (challenge : Polynomial K)
+    (discrepancyZero :
+      commonDiscrepancy parent factor x₀ d m x challenge = 0) :
+    candidate.eval x = challenge.eval z := by
+  let specialization :=
+    branchSpecialization factor factorPositive x₀ z candidate localRoot
+  have specializedZero := congrArg specialization discrepancyZero
+  rw [map_zero] at specializedZero
+  unfold commonDiscrepancy at specializedZero
+  rw [map_sub, branchSpecialization_commonNumerator_eval parent factor
+    factorPositive x₀ z candidate localRoot d m dPositive parentDegreeLe
+    candidateRoot candidateDegree x] at specializedZero
+  dsimp only [specialization] at specializedZero
+  simp only [map_mul, map_pow, branchSpecialization_regularLeadingCoefficient,
+    branchSpecialization_of] at specializedZero
+  have clearingNeZero : factor.leadingCoeff.eval z *
+      specialization (regularDerivativeElement parent factor x₀ d) ^
+        henselExponent m ≠ 0 :=
+    mul_ne_zero leadingNeZero (pow_ne_zero _ etaImageNeZero)
+  apply (mul_left_cancel₀ clearingNeZero)
+  exact sub_eq_zero.mp (by
+    simpa only [mul_sub] using specializedZero)
+
 /-- More than `h C_m` agreeing valid branches force the regular challenge
 discrepancy to vanish.  This is the paper's second resultant use. -/
 theorem commonDiscrepancy_eq_zero_of_many_branches
@@ -670,6 +711,7 @@ theorem secondResultant_identifies_henselTruncation
 #print axioms sum_shiftedCandidateSeries_coeff_eq_eval
 #print axioms branchSpecialization_commonNumerator_eval
 #print axioms branchSpecialization_commonDiscrepancy_eq_zero
+#print axioms candidate_eval_eq_challenge_eval_of_discrepancy_eq_zero
 #print axioms commonDiscrepancy_eq_zero_of_many_branches
 #print axioms centeredCoefficientTruncation_eval_eq_challenge_of_discrepancy_eq_zero
 #print axioms centeredHenselTruncation_eval_eq_challenge_of_discrepancy_eq_zero
