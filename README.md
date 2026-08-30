@@ -18,9 +18,12 @@ cd weighted-hensel-repair
 ```
 
 The script is a transparent wrapper around Mathlib's standard pinned-cache
-fetch, `lake build WeightedHensel.Terminal`, `lake env lean Main.lean`, and
-source-hygiene scans. The `.lean` sources are the authoritative artifact; the
-downloaded `.olean` files are only a Mathlib build cache.
+fetch, `lake build WeightedHensel.Terminal:olean`, `lake env lean Main.lean`,
+and source-hygiene scans. The explicit `:olean` facet compiles the complete
+theorem dependency graph while avoiding unused C and editor-metadata artifacts;
+it does not use or distribute precompiled project proofs. The `.lean` sources
+are the authoritative artifact; downloaded dependency `.olean` files are only
+a Mathlib build cache.
 
 | Replay datum | Expected value |
 | --- | ---: |
@@ -123,7 +126,7 @@ The canonical clean-checkout replay is:
 Reviewers who prefer the underlying commands can run:
 
 ```sh
-lake build WeightedHensel.Terminal
+lake build WeightedHensel.Terminal:olean
 lake env lean Main.lean
 ```
 
@@ -312,7 +315,7 @@ The source audit used for release is:
 ```sh
 git diff --check
 rg -n '\b(sorry|admit|sorryAx|axiom|native_decide)\b' --glob '*.lean' .
-lake build WeightedHensel.Terminal
+lake build WeightedHensel.Terminal:olean
 lake build
 ```
 
