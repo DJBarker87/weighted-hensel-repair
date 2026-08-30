@@ -8,3 +8,5 @@ import WeightedHensel.Counterexamples
 import WeightedHensel.DivisionFreeRecurrence
 import WeightedHensel.ResultantBound
 import WeightedHensel.Specialization
+import WeightedHensel.PowerSeriesLift
+import WeightedHensel.Truncation
