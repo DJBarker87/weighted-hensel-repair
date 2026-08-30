@@ -8,17 +8,19 @@ cd weighted-hensel-repair
 ./scripts/verify.sh
 ```
 
-The script is a transparent wrapper around `lake build
-WeightedHensel.Terminal`, `lake env lean Main.lean`, and source-hygiene scans.
-The `.lean` sources are the authoritative artifact.
+The script is a transparent wrapper around Mathlib's standard pinned-cache
+fetch, `lake build WeightedHensel.Terminal`, `lake env lean Main.lean`, and
+source-hygiene scans. The `.lean` sources are the authoritative artifact; the
+downloaded `.olean` files are only a Mathlib build cache.
 
 | Replay datum | Expected value |
 | --- | ---: |
-| Clean replay | about 1 minute |
+| First replay after clone | about 2 minutes |
+| Clean project build after cache setup | about 1 minute |
 | Peak RSS | about 6.5 GiB |
 | Swap | none required |
 | Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
-| Archival release | `v1.0-eprint` |
+| Archival release | `v1.0.1-eprint` |
 
 The script prints the exact checked-out commit. The release tag identifies the
 immutable ePrint artifact.

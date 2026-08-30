@@ -22,6 +22,10 @@ echo "Commit: $(git rev-parse HEAD)"
 echo "Lean: $("${lake_command[@]}" env lean --version)"
 echo
 
+echo "=== Fetching the pinned Mathlib build cache ==="
+"${lake_command[@]}" exe cache get
+
+echo
 echo "=== Building terminal theorem dependency graph ==="
 "${lake_command[@]}" build WeightedHensel.Terminal
 
