@@ -419,7 +419,7 @@ degree.
 -/
 
 def iteratedBivariateWeight
-    {K : Type*} [Field K] (tWeight : Nat)
+    {K : Type*} [Semiring K] (tWeight : Nat)
     (polynomial : BivariatePolynomial K) : Nat :=
   polynomial.support.sup fun exponent =>
     (polynomial.coeff exponent).natDegree + exponent * tWeight
@@ -453,7 +453,7 @@ theorem iteratedBivariateWeight_monomial_le
 /-- Every nonzero outer coefficient contributes its literal weighted
 degree to the supremum. -/
 theorem coeff_weight_le_iteratedBivariateWeight
-    {K : Type*} [Field K] (tWeight : Nat)
+    {K : Type*} [Semiring K] (tWeight : Nat)
     (polynomial : BivariatePolynomial K) (exponent : Nat)
     (coefficientMem : exponent ∈ polynomial.support) :
     (polynomial.coeff exponent).natDegree + exponent * tWeight ≤
@@ -466,7 +466,7 @@ theorem coeff_weight_le_iteratedBivariateWeight
 
 /-- A coefficientwise ceiling bounds the iterated-support weight. -/
 theorem iteratedBivariateWeight_le_of_coeff
-    {K : Type*} [Field K] (tWeight bound : Nat)
+    {K : Type*} [Semiring K] (tWeight bound : Nat)
     (polynomial : BivariatePolynomial K)
     (coefficientBound : ∀ exponent ∈ polynomial.support,
       (polynomial.coeff exponent).natDegree + exponent * tWeight ≤ bound) :
@@ -812,7 +812,8 @@ theorem coeff_weight_le_localBivariateWeight
 /-- The multivariate and iterated-support presentations of the local weight
 are literally equal over a field. -/
 theorem localBivariateWeight_eq_iteratedBivariateWeight
-    {K : Type*} [Field K] (tWeight : Nat)
+    {K : Type*} [CommRing K] [NoZeroDivisors K] [Nontrivial K]
+    (tWeight : Nat)
     (polynomial : BivariatePolynomial K) :
     localBivariateWeight tWeight polynomial =
       iteratedBivariateWeight tWeight polynomial := by

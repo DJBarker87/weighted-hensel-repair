@@ -642,14 +642,14 @@ structure PoleResultantExceptionalData
     {K : Type*} [Field K]
     (parent : TrivariatePolynomial K) (factor : BivariatePolynomial K)
     (factorNeZero : factor ≠ 0) (x₀ : K) (content : Polynomial K)
-    (challenges : Finset K) where
+    (challenges : Finset K) (ell : Nat) where
   xi : RegularQuotient factor
   clearing : regularDerivativeElement parent factor x₀ parent.natDegree =
     AdjoinRoot.of (monicization factor) factor.leadingCoeff * xi
   xiNeZero : xi ≠ 0
   exceptional : Finset K
   exceptionalCard : exceptional.card <
-    parent.natDegree * factor.natDegree * fullYZWeightedDegree 1 parent
+    parent.natDegree * factor.natDegree * fullYZWeightedDegree ell parent
   exceptionalSubset : exceptional ⊆ challenges
   contentIncluded : ∀ z ∈ challenges, content.eval z = 0 → z ∈ exceptional
   regularOutside : ∀ z ∈ challenges, z ∉ exceptional →
@@ -668,38 +668,47 @@ theorem exists_pole_resultant_exceptional_set
     (factorIrreducible : Irreducible factor)
     (factorPositive : 0 < factor.natDegree)
     (parentPositive : 1 ≤ parent.natDegree)
+    (ell : Nat) (ellPositive : 1 ≤ ell)
     (x₀ : K) (content : Polynomial K) (cofactor : BivariatePolynomial K)
     (factorization : specializeX x₀ parent =
       Polynomial.C content * cofactor)
     (factorDvd : factor ∣ specializeX x₀ parent)
-    (factorWeightLe : localBivariateWeight 1 factor ≤
-      fullYZWeightedDegree 1 parent)
+    (factorWeightLe : localBivariateWeight ell factor ≤
+      fullYZWeightedDegree ell parent)
     (etaNeZero : regularDerivativeElement parent factor x₀
       parent.natDegree ≠ 0)
     (challenges : Finset K) :
     Nonempty (PoleResultantExceptionalData parent factor
-      factorIrreducible.ne_zero x₀ content challenges) := by
+      factorIrreducible.ne_zero x₀ content challenges ell) := by
   classical
-  let G := fullYZWeightedDegree 1 parent
+  let G := fullYZWeightedDegree ell parent
   let h := factor.natDegree
   let d := parent.natDegree
-  let b := G - h
-  let tau := b + 1
-  let mu := sourceMu G 1 d b
+  let b := G - ell * h
+  let tau := b + ell
+  let mu := sourceMu G ell d b
   let w := factor.leadingCoeff.natDegree
-  let sigma := sourceSigma G 1 d b w
+  let sigma := sourceSigma G ell d b w
   have factorNeZero : factor ≠ 0 := factorIrreducible.ne_zero
   have factorCoefficientBound : ∀ exponent ∈ factor.support,
-      (factor.coeff exponent).natDegree + 1 * exponent ≤ G := by
+      (factor.coeff exponent).natDegree + ell * exponent ≤ G := by
     intro exponent exponentMem
     simpa [G, Nat.mul_comm] using
-      (coeff_weight_le_localBivariateWeight 1 factor exponent
+      (coeff_weight_le_localBivariateWeight ell factor exponent
         exponentMem).trans factorWeightLe
   have leadingMem : h ∈ factor.support :=
     Polynomial.natDegree_mem_support_of_nonzero factorNeZero
-  have leadingBound : w + h ≤ G := by
+  have leadingBound : w + ell * h ≤ G := by
     simpa [h, w] using factorCoefficientBound h leadingMem
-  have hLeG : h ≤ G := by omega
+  have hPositive : 1 ≤ h := by dsimp [h]; omega
+  have ellLeEllH : ell ≤ ell * h :=
+    Nat.le_mul_of_pos_right ell hPositive
+  have ellLeG : ell ≤ G := by
+    exact ellLeEllH.trans ((Nat.le_add_left (ell * h) w).trans leadingBound)
+  have wPlusEllLeG : w + ell ≤ G := by
+    exact (Nat.add_le_add_left ellLeEllH w).trans leadingBound
+  have wLeGSubEll : w ≤ G - ell :=
+    Nat.le_sub_of_add_le wPlusEllLeG
   have GPositive : 1 ≤ G := by omega
   have wLeB : w ≤ b := by
     dsimp [b]
@@ -708,12 +717,12 @@ theorem exists_pole_resultant_exceptional_set
     Polynomial.natDegree_map_le
   obtain ⟨xiRepresentative, representativeEq, representativeWeight⟩ :=
     exists_sourceDerivativePolynomialNumerator parent factor x₀
-      1 G d b tau factorNeZero
-      (parentCoefficientBound_fullYZWeightedDegree 1 parent) rfl wLeB
+      ell G d b tau factorNeZero
+      (parentCoefficientBound_fullYZWeightedDegree ell parent) rfl wLeB
       parentPositive factorDvd specializedDegreeLe
   let xi : RegularQuotient factor :=
     AdjoinRoot.mk (monicization factor) xiRepresentative
-  have generatorEq : G + 1 - 1 * h = tau := by
+  have generatorEq : G + ell - ell * h = tau := by
     dsimp [tau, b]
     omega
   have clearing : regularDerivativeElement parent factor x₀ d =
@@ -727,7 +736,7 @@ theorem exists_pole_resultant_exceptional_set
     rw [clearing, xiZero, mul_zero]
   have xiBound : regularWeight factor factorNeZero tau xi ≤
       (sigma : WithBot Nat) := by
-    have quotientBound := regularWeight_mk_le factor factorNeZero 1 G
+    have quotientBound := regularWeight_mk_le factor factorNeZero ell G
       factorCoefficientBound xiRepresentative
     rw [generatorEq] at quotientBound
     exact quotientBound.trans representativeWeight
@@ -759,17 +768,18 @@ theorem exists_pole_resultant_exceptional_set
         exact (Finset.mem_filter.mp zMem).2
       _ ≤ h * regularWeightNat factor factorNeZero tau xi := by
         have degreeBound := canonicalRepresentative_resultant_natDegree_le
-          factor factorNeZero 1 G factorCoefficientBound xi
+          factor factorNeZero ell G factorCoefficientBound xi
         change controllingResultant.natDegree ≤
-          h * regularWeightNat factor factorNeZero (G + 1 - 1 * h) xi at degreeBound
+          h * regularWeightNat factor factorNeZero
+            (G + ell - ell * h) xi at degreeBound
         rw [generatorEq] at degreeBound
         exact degreeBound
   have wLeMu : w ≤ mu := by
     dsimp [mu, sourceMu]
-    omega
+    exact wLeGSubEll.trans (Nat.le_add_right _ _)
   have muLt : mu < d * G :=
-    sourceMu_lt_commonDegree G G G 1 h d mu le_rfl le_rfl
-      (by omega) GPositive parentPositive (by simp [mu, b, sourceMu])
+    sourceMu_lt_commonDegree G G G ell h d mu le_rfl le_rfl
+      ellPositive ellLeG parentPositive (by simp [mu, b, sourceMu])
   have exceptionalCard : exceptional.card < h * d * G := by
     calc
       exceptional.card ≤ leadingRoots.card + resultantRoots.card :=
@@ -852,20 +862,21 @@ noncomputable def poleResultantExceptionalData
     (factorIrreducible : Irreducible factor)
     (factorPositive : 0 < factor.natDegree)
     (parentPositive : 1 ≤ parent.natDegree)
+    (ell : Nat) (ellPositive : 1 ≤ ell)
     (x₀ : K) (content : Polynomial K) (cofactor : BivariatePolynomial K)
     (factorization : specializeX x₀ parent =
       Polynomial.C content * cofactor)
     (factorDvd : factor ∣ specializeX x₀ parent)
-    (factorWeightLe : localBivariateWeight 1 factor ≤
-      fullYZWeightedDegree 1 parent)
+    (factorWeightLe : localBivariateWeight ell factor ≤
+      fullYZWeightedDegree ell parent)
     (etaNeZero : regularDerivativeElement parent factor x₀
       parent.natDegree ≠ 0)
     (challenges : Finset K) :
     PoleResultantExceptionalData parent factor factorIrreducible.ne_zero x₀
-      content challenges :=
+      content challenges ell :=
   Classical.choice (exists_pole_resultant_exceptional_set parent factor
-    factorIrreducible factorPositive parentPositive x₀ content cofactor
-    factorization factorDvd factorWeightLe etaNeZero challenges)
+    factorIrreducible factorPositive parentPositive ell ellPositive x₀ content
+    cofactor factorization factorDvd factorWeightLe etaNeZero challenges)
 
 /-- Equation (120), with the degree estimate from (44): content-root
 specializations on a fixed branch are charged to the roots of `W` and the
@@ -2084,6 +2095,7 @@ theorem full_factor_degree_transfer
       (branchPositive index (Finset.mem_filter.mp indexMem).1
         branchIndex branchIndexMem)
       (parentPositive index (Finset.mem_filter.mp indexMem).1)
+      1 (by omega)
       x₀ (content index)
       (∏ candidate ∈ branchIndices index, branch index candidate)
       (specializationFactorization index (Finset.mem_filter.mp indexMem).1)
