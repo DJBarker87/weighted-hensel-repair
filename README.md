@@ -5,8 +5,9 @@
 **Paper:** *Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
 Decodability*
 
-**Verification artifact:** archival tag `v1.0.1-eprint` (artifact version, not
-a manuscript version)
+**Verification artifact:** the `.lean` sources in this standalone repository.
+The replay script prints the exact checked-out commit so a paper or referee
+report can pin the reviewed state without inventing a manuscript version.
 
 ## One-command verification
 
@@ -28,11 +29,9 @@ downloaded `.olean` files are only a Mathlib build cache.
 | Peak RSS | about 6.5 GiB |
 | Swap | none required |
 | Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
-| Archival release | `v1.0.1-eprint` |
 
-The script prints the exact checked-out commit. The archival tag identifies
-the exact reviewed commit; an ePrint link will be added when its identifier is
-allocated.
+The script prints the exact checked-out commit. An ePrint link and immutable
+archive identifier can be added after the manuscript receives them.
 
 ## Headline results
 
@@ -43,10 +42,12 @@ allocated.
 | Weighted resultant zero count | `weighted_resultant_zero_count` |
 | Fixed-branch curve conclusion | `fixed_branch_curve_decodability` |
 | Full-factor transfer with BCHKS26 Step 2 separability | `full_factor_degree_transfer` |
+| Separable global-to-curve composition | `separable_full_factor_curve_decodability` |
+| Inseparable Frobenius extension, Corollary 7.11 | `inseparable_frobenius_curve_decodability` |
 | Degree-28 instance | `concrete_degree28_curve_decodable` |
 | Degree-3 instance | `concrete_degree3_curve_decodable` |
 
-`Main.lean` is the human-readable front door: it `#check`s these seven
+`Main.lean` is the human-readable front door: it `#check`s these nine
 declarations and prints each axiom report.
 
 ## Trust boundary
@@ -67,6 +68,11 @@ recurrences, both resultant arguments, specialization, truncation,
 interpolation, fixed-branch completion, the 2026 full-factor transfer, the
 paper's counterexamples, and both numerical Reed–Solomon instances.
 
+It also formalizes the complete inseparable Frobenius extension: factorization
+through `Y^(p^f)`, both global degree ledgers, sparse exact truncation,
+compatible Frobenius roots, inverse-Frobenius recovery, the rooted second
+resultant, source reindexing, and final line interpolation.
+
 The development depends only on Lean and Mathlib. It does not import Aspis or
 formalize any protocol, compiler, cryptographic primitive, or deployment
 machinery.
@@ -82,6 +88,14 @@ propext
 Classical.choice
 Quot.sound
 ```
+
+The current Lean head machine-checks every substantive mathematical result in
+the supplied Revision 16 PDF, including Corollary 7.11. Revision 16 itself
+predates that completion and therefore understates Lean coverage in its
+formal-verification section and conclusion. The exact reconciliation and the
+paper theorem/numbering ledger, together with the sentences that the
+forthcoming paper version must update, are recorded in
+[PAPER_ALIGNMENT.md](PAPER_ALIGNMENT.md).
 
 Proposition 7.10 uses separability after specializing `X = x₀`. Generic
 separability alone would not imply this, but BCHKS26 Step 2 explicitly chooses
@@ -173,6 +187,15 @@ mathematical fact in a single statement.
 | Content roots charged to the derivative resultant | `specialization_content_dvd_clearedDerivativeRepresentative`, `card_content_root_specializations_lt_pole_budget` | proved |
 | Specialized-parent separability implies branch derivative nonvanishing | `regularDerivativeElement_ne_zero_of_specialized_separable` | proved |
 | 2026 full-factor summation, Proposition 7.10 | `full_factor_degree_transfer` | proved from the explicit BCHKS26 Step 2 hypothesis |
+| Proposition 7.10 composed with the separable line theorem | `separable_full_factor_curve_decodability` | proved |
+| Frobenius factor weighted-degree ledgers, equations (127)–(129) | `fullFactor_frobenius_weight_summation`, `fullFactor_frobenius_yDegree_summation` | proved |
+| Inseparable pairwise summation, equations (135)–(136) | `fullFactor_parent_yDegree_summation_le`, `frobenius_factor_square_weight_sum_le` | proved |
+| Powered-parent cutoff, equation (137) | `frobenius_parent_order_lt_global_XY_degree`, `frobenius_substitutionDegreeBound` | proved |
+| Sparse Taylor coefficients and exact `q`-power truncation | `coeff_shiftedCandidateSeries_frobeniusPower_eq_zero_of_not_dvd`, `exists_exact_sparse_henselTruncation_of_many_frobenius_branches` | proved |
+| Compatible function-field Frobenius roots | `perfectPolynomialFrobeniusRoot_pow`, `bivariateFrobeniusRoot_localRoot`, `regularFrobeniusRootEquiv` | proved |
+| Rooted common numerator and second resultant, equation (139) | `frobeniusRootedCommonNumerator_eval_weightNat_le`, `frobeniusRootedDiscrepancy_eq_zero_of_many_branches` | proved |
+| Inverse-Frobenius source reindexing | `fixed_branch_frobenius_line_decodability_source_indexed` | proved |
+| Inseparable factors, Corollary 7.11 | `inseparable_frobenius_curve_decodability` | proved end to end from the stated global and incidence hypotheses |
 | Exact degree-28 Guruswami–Sudan cap | `degree28_guruswamiSudan_list_card_le_100` | proved |
 | Exact degree-3 Guruswami–Sudan cap | `degree3_guruswamiSudan_list_card_le_99` | proved |
 | Separate analytic list parameters 112 and 113 | `degree28_rateOnlyListExpression_eq_112`, `degree3_rateOnlyListExpression_lt_113` | proved |
@@ -183,8 +206,10 @@ mathematical fact in a single statement.
 
 The two concrete terminal theorems instantiate the fixed-branch completion
 with the exact numerical allowances and GRS normalization. The independent
-global factor-selection bookkeeping is `full_factor_degree_transfer`; the
-repository does not disguise either result as an executable decoder.
+global factor-selection bookkeeping is `full_factor_degree_transfer`, and
+`separable_full_factor_curve_decodability` composes it with the local curve
+theorem. The repository does not disguise these results as an executable
+decoder.
 
 ## Module guide
 
@@ -208,10 +233,20 @@ repository does not disguise either result as an executable decoder.
 | `FixedBranch` | Fixed-branch curve completion theorem |
 | `CoarseBounds` | Repaired bounds versus the published coarse allowances |
 | `FactorDegreeTransfer` | Full weighted-degree preservation and 2026 factor summation |
+| `SeparableCorollary` | Proposition 7.10 composed with separable line completion |
+| `Frobenius` | Finite-field inverse Frobenius and sparse Taylor identities |
+| `FrobeniusBranch` | Compatible quotient/function-field Frobenius roots |
+| `FrobeniusTruncation` | Sparse first-resultant coefficient vanishing |
+| `FrobeniusExactTruncation` | Exact sparse lift, contraction, and literal `q`-th root |
+| `FrobeniusCommonNumerator` | Rooted numerator and second resultant |
+| `FrobeniusFactorTransfer` | Inseparable full-factor degree and content bookkeeping |
+| `FrobeniusSubstitutionDegree` | Global `(1,k,0)` substitution-degree bound |
+| `FrobeniusReindex` | Source-indexed inverse-Frobenius transport |
+| `FrobeniusCorollary` | Complete Corollary 7.11 composition |
 | `JohnsonBound` | Exact finite incidence/list-cardinality inequality |
 | `CurveDecodability` | GRS normalization and multiplier restoration |
 | `ConcreteParameters` | Both exact numerical parameter columns |
-| `Terminal` | Seven paper-level terminal declarations and axiom reports |
+| `Terminal` | Nine paper-level terminal declarations and axiom reports |
 
 ## Terminal declarations
 
@@ -223,6 +258,8 @@ division_free_hensel_estimate
 weighted_resultant_zero_count
 fixed_branch_curve_decodability
 full_factor_degree_transfer
+separable_full_factor_curve_decodability
+inseparable_frobenius_curve_decodability
 concrete_degree28_curve_decodable
 concrete_degree3_curve_decodable
 ```
@@ -249,7 +286,9 @@ polynomials of degree at most 1024 has dimension 1025.
 
 Classical choice is used for quotient representatives, roots/factor choices,
 finite assignment choices, and interpolation. Real square roots are used only
-in the concrete analytic calculations. No executable decoder is claimed.
+in the concrete analytic calculations. The inseparable proof uses finite-field
+inverse Frobenius and, for the generic compatible polynomial root, the standard
+Mathlib algebraic closure. No executable decoder is claimed.
 
 The generic theorems take the paper's operative algebraic data as explicit
 hypotheses: polynomial factorizations, irreducibility, branch roots,
@@ -257,6 +296,8 @@ specialized-parent separability for the full-factor transfer, nonvanishing
 leading coefficients and regular derivatives for the fixed-branch interface,
 degree bounds, candidate-root identities, agreement supports, and cardinality
 inequalities.
+For Corollary 7.11 it additionally takes the characteristic, Frobenius exponents,
+global `(1,k,0)` bound, and the same explicit support-incidence inequality.
 The development proves the consequences of those hypotheses; it does not
 formalize the cited papers' interpolation-polynomial construction or an
 algorithm that discovers the factors.

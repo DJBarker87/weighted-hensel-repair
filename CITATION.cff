@@ -9,10 +9,8 @@ type: software
 authors:
   - family-names: Barker
     given-names: Dominic
-version: 1.0.1-eprint
-date-released: 2026-08-30
 repository-code: https://github.com/DJBarker87/weighted-hensel-repair
-url: https://github.com/DJBarker87/weighted-hensel-repair/releases/tag/v1.0.1-eprint
+url: https://github.com/DJBarker87/weighted-hensel-repair
 license: Apache-2.0
 keywords:
   - Lean 4

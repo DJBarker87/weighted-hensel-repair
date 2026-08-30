@@ -1,7 +1,7 @@
 import WeightedHensel.Terminal
 
 /-!
-Human-readable replay entry point for the seven paper-level terminal results.
+Human-readable replay entry point for the nine paper-level terminal results.
 -/
 
 open WeightedHensel
@@ -11,6 +11,8 @@ open WeightedHensel
 #check weighted_resultant_zero_count
 #check fixed_branch_curve_decodability
 #check full_factor_degree_transfer
+#check separable_full_factor_curve_decodability
+#check inseparable_frobenius_curve_decodability
 #check concrete_degree28_curve_decodable
 #check concrete_degree3_curve_decodable
 
@@ -19,5 +21,7 @@ open WeightedHensel
 #print axioms weighted_resultant_zero_count
 #print axioms fixed_branch_curve_decodability
 #print axioms full_factor_degree_transfer
+#print axioms separable_full_factor_curve_decodability
+#print axioms inseparable_frobenius_curve_decodability
 #print axioms concrete_degree28_curve_decodable
 #print axioms concrete_degree3_curve_decodable

@@ -5,11 +5,16 @@ Authors: Dominic Barker
 -/
 
 import WeightedHensel.ConcreteParameters
+import WeightedHensel.FrobeniusCorollary
+import WeightedHensel.SeparableCorollary
 
 /-!
 # Paper-level terminal results
 
-The two concrete theorems below instantiate the generic fixed-branch theorem
+The terminal dependency graph includes both global-to-local factor paths:
+the separable Proposition 7.10 composition and the inseparable Frobenius
+extension of Corollary 7.11.  The two concrete theorems below instantiate
+the generic fixed-branch theorem
 with every numerical table entry.  Their `challenges` argument is the
 surviving good-challenge set; the ambient universes `Kˣ` and `K` are checked
 separately in `ConcreteParameters`.  GRS words are normalized on entry and
@@ -260,6 +265,8 @@ theorem concrete_degree3_curve_decodable
 #print axioms weighted_resultant_zero_count
 #print axioms fixed_branch_curve_decodability
 #print axioms full_factor_degree_transfer
+#print axioms separable_full_factor_curve_decodability
+#print axioms inseparable_frobenius_curve_decodability
 #print axioms concrete_degree28_curve_decodable
 #print axioms concrete_degree3_curve_decodable
 

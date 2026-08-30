@@ -18,5 +18,7 @@ import WeightedHensel.CoarseBounds
 import WeightedHensel.FactorDegreeTransfer
 import WeightedHensel.JohnsonBound
 import WeightedHensel.CurveDecodability
+import WeightedHensel.SeparableCorollary
+import WeightedHensel.FrobeniusCorollary
 import WeightedHensel.ConcreteParameters
 import WeightedHensel.Terminal

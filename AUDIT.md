@@ -32,3 +32,20 @@ it before constructing the pole/resultant exceptional sets.
 **Status:** closed and proved. The standalone proposition should make the
 Step 2 choice explicit, but there is no gap in the BCHKS26 argument and no
 remaining C–E obligation in this development.
+
+## Revision 16 completion audit
+
+The theorem-by-theorem comparison, including a separate ledger for the
+inseparable Frobenius proof, is recorded in
+[PAPER_ALIGNMENT.md](PAPER_ALIGNMENT.md). Corollary 7.11 is now proved by
+`inseparable_frobenius_curve_decodability`; Proposition 7.10 is also composed
+with the fixed-branch line theorem in
+`separable_full_factor_curve_decodability`.
+
+Revision 16's statements that the inseparable extension is not formalized now
+understate the repository. They are documentary alignment items for the next
+paper version, not mathematical obstructions.
+
+**Current classification:** no unclosed A–E obligations. In particular, there
+are no unclosed C, D, or E items and no assumptions introduced solely to make
+a terminal theorem pass.
