@@ -74,6 +74,21 @@ theorem monicization_bivariateFrobeniusRoot
         polynomialFrobeniusRoot p f 0
       simpa [polynomialFrobeniusRoot] using mappedZero)
 
+/-- Every coefficientwise weighted-degree bound is preserved by inverse
+Frobenius. -/
+theorem bivariateFrobeniusRoot_coefficientBound
+    {K : Type*} [Field K] [Finite K]
+    (p f ell bound : Nat) [Fact p.Prime] [CharP K p]
+    (factor : BivariatePolynomial K)
+    (coefficientBound : ∀ exponent ∈ factor.support,
+      (factor.coeff exponent).natDegree + ell * exponent ≤ bound) :
+    ∀ exponent ∈ (bivariateFrobeniusRoot p f factor).support,
+      ((bivariateFrobeniusRoot p f factor).coeff exponent).natDegree +
+          ell * exponent ≤ bound := by
+  intro exponent exponentMem
+  rw [support_bivariateFrobeniusRoot] at exponentMem
+  simpa using coefficientBound exponent exponentMem
+
 /-- The regular quotients of a branch and its coefficientwise
 inverse-Frobenius transform are canonically equivalent. -/
 def regularFrobeniusRootEquiv
@@ -132,6 +147,19 @@ theorem regularFrobeniusRootEquiv_mk
   | monomial exponent coefficient =>
       rw [← Polynomial.C_mul_X_pow_eq_monomial]
       simp
+
+/-- The regular leading coefficient is carried to the regular leading
+coefficient of the inverse-Frobenius branch. -/
+@[simp] theorem regularFrobeniusRootEquiv_regularLeadingCoefficient
+    {K : Type*} [Field K] [Finite K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (factor : BivariatePolynomial K) (factorNeZero : factor ≠ 0) :
+    regularFrobeniusRootEquiv p f factor factorNeZero
+        (regularLeadingCoefficient factor) =
+      regularLeadingCoefficient (bivariateFrobeniusRoot p f factor) := by
+  unfold regularLeadingCoefficient
+  rw [regularFrobeniusRootEquiv_of,
+    leadingCoeff_bivariateFrobeniusRoot]
 
 /-- Canonical representatives commute with the regular inverse-Frobenius
 equivalence. -/

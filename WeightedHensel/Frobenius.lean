@@ -241,6 +241,22 @@ theorem coeff_taylor_frobeniusPower_mul
     Polynomial.coeff_expand_mul (pow_pos (Fact.out : p.Prime).pos f)]
   rfl
 
+/-- At a divisible index, the shifted-candidate series coefficient of a
+Frobenius power is the corresponding original coefficient raised to `q`. -/
+theorem coeff_shiftedCandidateSeries_frobeniusPower_mul
+    {K : Type*} [Field K]
+    (p f : Nat) [Fact p.Prime] [CharP K p]
+    (x₀ : K) (candidate : Polynomial K) (order : Nat) :
+    PowerSeries.coeff (order * frobeniusPower p f)
+        (shiftedCandidateSeries x₀
+          (candidate ^ frobeniusPower p f)) =
+      PowerSeries.coeff order (shiftedCandidateSeries x₀ candidate) ^
+        frobeniusPower p f := by
+  rw [shiftedCandidateSeries, shiftedEvaluationHom_eq_coe_taylor,
+    Polynomial.coeff_coe, shiftedCandidateSeries,
+    shiftedEvaluationHom_eq_coe_taylor, Polynomial.coeff_coe]
+  exact coeff_taylor_frobeniusPower_mul p f x₀ candidate order
+
 /-- Power-series form of translated Frobenius sparsity. -/
 theorem coeff_shiftedCandidateSeries_frobeniusPower_eq_zero_of_not_dvd
     {K : Type*} [Field K]
