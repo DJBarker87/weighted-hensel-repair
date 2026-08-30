@@ -69,6 +69,35 @@ def counterexampleFactor (K : Type*) [Field K] : BivariatePolynomial K :=
     exact Polynomial.monic_X_add_C (Polynomial.X ^ 2)
   exact monic.leadingCoeff
 
+@[simp] theorem counterexampleFactor_coeff_zero
+    {K : Type*} [Field K] :
+    (counterexampleFactor K).coeff 0 = Polynomial.X ^ 2 := by
+  simp only [counterexampleFactor, Polynomial.coeff_add,
+    Polynomial.coeff_X_zero, Polynomial.coeff_C_zero, zero_add]
+
+@[simp] theorem counterexampleFactor_coeff_one
+    {K : Type*} [Field K] : (counterexampleFactor K).coeff 1 = 1 := by
+  simp only [counterexampleFactor, Polynomial.coeff_add,
+    Polynomial.coeff_X_one, Polynomial.coeff_C]
+  norm_num
+
+/-- The selected branch has the paper's coefficient bound `D_H=2` when
+`ell=1`. -/
+theorem counterexampleFactor_coefficient_bound
+    {K : Type*} [Field K] :
+    ∀ exponent ∈ (counterexampleFactor K).support,
+      ((counterexampleFactor K).coeff exponent).natDegree + exponent ≤ 2 := by
+  intro exponent exponentMem
+  have exponentLe : exponent ≤ 1 := by
+    rw [← counterexampleFactor_natDegree (K := K)]
+    exact Polynomial.le_natDegree_of_ne_zero
+      (Polynomial.mem_support_iff.mp exponentMem)
+  interval_cases exponent
+  · rw [counterexampleFactor_coeff_zero]
+    simp
+  · rw [counterexampleFactor_coeff_one]
+    norm_num
+
 /-- The branch root `-Z^2`. -/
 def counterexampleRoot {K : Type*} [Field K] : Polynomial K :=
   -(Polynomial.X ^ 2)
@@ -411,6 +440,553 @@ theorem derivative_printed_ceiling_fails :
     printedDerivativeCeiling 4 3 0 < 4 := by
   norm_num [printedDerivativeCeiling]
 
+/-! ## Admissibility of the three examples
+
+The numerical failures above are not artifacts of reducible or inseparable
+parents.  The following declarations check the irreducibility, separability,
+and square-freeness assertions made in Section 3 of the paper.  Separability
+in the response variable is stated after mapping the coefficient ring
+`K[X,Z]` to its fraction field.
+-/
+
+/-- Ring equivalence interchanging the challenge variable `X` and the
+response variable `Y`, while fixing `Z`. -/
+def swapChallengeResponse
+    (K : Type*) [Field K] :
+    TrivariatePolynomial K ≃+* TrivariatePolynomial K :=
+  (Polynomial.Bivariate.swap (R := Polynomial K)).toRingEquiv |>.trans
+    ((Polynomial.mapAlgEquiv
+      (Polynomial.Bivariate.swap (R := K))).toRingEquiv |>.trans
+        (Polynomial.Bivariate.swap (R := Polynomial K)).toRingEquiv)
+
+/-- The positive-order parent, viewed as a degree-one polynomial in the
+challenge variable. -/
+def positiveOrderParentByChallenge
+    (K : Type*) [Field K] : Polynomial (BivariatePolynomial K) :=
+  Polynomial.C ((Polynomial.C Polynomial.X : BivariatePolynomial K) ^ 2) *
+      Polynomial.X +
+    Polynomial.C
+      (Polynomial.C Polynomial.X + (Polynomial.X : BivariatePolynomial K) ^ 2)
+
+theorem positiveOrderParentByChallenge_irreducible
+    {K : Type*} [Field K] :
+    Irreducible (positiveOrderParentByChallenge K) := by
+  apply Polynomial.irreducible_C_mul_X_add_C
+  · exact pow_ne_zero 2 (Polynomial.C_ne_zero.mpr Polynomial.X_ne_zero)
+  · apply IsRelPrime.pow_left
+    have innerPrime : Prime
+        (Polynomial.C Polynomial.X : BivariatePolynomial K) :=
+      Polynomial.prime_C_iff.mpr Polynomial.prime_X
+    apply innerPrime.irreducible.isRelPrime_iff_not_dvd.mpr
+    intro divides
+    have coefficientDivides :=
+      (Polynomial.C_dvd_iff_dvd_coeff Polynomial.X
+        (Polynomial.C Polynomial.X +
+          (Polynomial.X : BivariatePolynomial K) ^ 2)).mp divides 2
+    have xDvdOne : (Polynomial.X : Polynomial K) ∣ 1 := by
+      simpa using coefficientDivides
+    exact Polynomial.not_isUnit_X (isUnit_iff_dvd_one.mpr xDvdOne)
+
+theorem swapChallengeResponse_positiveOrderParent
+    {K : Type*} [Field K] :
+    swapChallengeResponse K (positiveOrderParent K) =
+      positiveOrderParentByChallenge K := by
+  simp [swapChallengeResponse, positiveOrderParent,
+    positiveOrderParentByChallenge,
+    Polynomial.Bivariate.swap_apply]
+  ring
+
+/-- The full positive-order counterexample parent is irreducible in
+`K[X,Z,Y]`. -/
+theorem positiveOrderParent_irreducible
+    {K : Type*} [Field K] : Irreducible (positiveOrderParent K) := by
+  have mappedIrreducible :
+      Irreducible (swapChallengeResponse K (positiveOrderParent K)) := by
+    rw [swapChallengeResponse_positiveOrderParent]
+    exact positiveOrderParentByChallenge_irreducible
+  exact mappedIrreducible.of_map
+
+/-- The chosen linear branch is irreducible over `K[Z]`. -/
+theorem counterexampleFactor_irreducible
+    {K : Type*} [Field K] : Irreducible (counterexampleFactor K) := by
+  have factorEq : counterexampleFactor K =
+      Polynomial.X - Polynomial.C (-(Polynomial.X ^ 2 : Polynomial K)) := by
+    simp [counterexampleFactor]
+  rw [factorEq]
+  exact Polynomial.irreducible_X_sub_C _
+
+theorem counterexampleFactor_eq_X_sub_C
+    {K : Type*} [Field K] : counterexampleFactor K =
+      Polynomial.X - Polynomial.C (-(Polynomial.X ^ 2 : Polynomial K)) := by
+  simp [counterexampleFactor]
+
+/-- The chosen branch is simple: its response derivative is one. -/
+theorem counterexampleFactor_derivative
+    {K : Type*} [Field K] : (counterexampleFactor K).derivative = 1 := by
+  unfold counterexampleFactor
+  rw [Polynomial.derivative_add, Polynomial.derivative_X,
+    Polynomial.derivative_C]
+  simp
+
+/-- The saturation parent, viewed as a monic linear polynomial in the
+challenge variable. -/
+def saturationParentByChallenge
+    (K : Type*) [Field K] : Polynomial (BivariatePolynomial K) :=
+  Polynomial.X + Polynomial.C
+    (Polynomial.Bivariate.swap (saturationSpecializedParent K))
+
+theorem saturationParentByChallenge_irreducible
+    {K : Type*} [Field K] :
+    Irreducible (saturationParentByChallenge K) := by
+  simpa [saturationParentByChallenge, sub_eq_add_neg] using
+    (Polynomial.irreducible_X_sub_C
+      (-(Polynomial.Bivariate.swap (saturationSpecializedParent K))))
+
+theorem swapChallengeResponse_saturationParent
+    {K : Type*} [Field K] :
+    swapChallengeResponse K (saturationParent K) =
+      saturationParentByChallenge K := by
+  simp [swapChallengeResponse, saturationParent, saturationParentByChallenge,
+    saturationSpecializedParent, counterexampleFactor,
+    counterexampleChallenge, counterexampleTrivariateY,
+    counterexampleTrivariateZ, Polynomial.Bivariate.swap_apply]
+  ring
+
+/-- The full saturation parent is irreducible in `K[X,Z,Y]`. -/
+theorem saturationParent_irreducible
+    {K : Type*} [Field K] : Irreducible (saturationParent K) := by
+  have mappedIrreducible :
+      Irreducible (swapChallengeResponse K (saturationParent K)) := by
+    rw [swapChallengeResponse_saturationParent]
+    exact saturationParentByChallenge_irreducible
+  exact mappedIrreducible.of_map
+
+/-- The derivative example parent, viewed as a monic linear polynomial in
+the challenge variable. -/
+def derivativeCounterexampleParentByChallenge :
+    Polynomial (BivariatePolynomial (ZMod 5)) :=
+  Polynomial.X + Polynomial.C
+    (Polynomial.Bivariate.swap derivativeSpecializedParent)
+
+theorem derivativeCounterexampleParentByChallenge_irreducible :
+    Irreducible derivativeCounterexampleParentByChallenge := by
+  simpa [derivativeCounterexampleParentByChallenge, sub_eq_add_neg] using
+    (Polynomial.irreducible_X_sub_C
+      (-(Polynomial.Bivariate.swap derivativeSpecializedParent)))
+
+theorem swapChallengeResponse_derivativeCounterexampleParent :
+    swapChallengeResponse (ZMod 5) derivativeCounterexampleParent =
+      derivativeCounterexampleParentByChallenge := by
+  simp [swapChallengeResponse, derivativeCounterexampleParent,
+    derivativeCounterexampleParentByChallenge, derivativeSpecializedParent,
+    counterexampleFactor, counterexampleChallenge, counterexampleTrivariateY,
+    counterexampleTrivariateZ, Polynomial.Bivariate.swap_apply]
+  ring
+
+/-- The derivative-counterexample parent is irreducible in
+`F₅[X,Z,Y]`. -/
+theorem derivativeCounterexampleParent_irreducible :
+    Irreducible derivativeCounterexampleParent := by
+  have mappedIrreducible : Irreducible
+      (swapChallengeResponse (ZMod 5) derivativeCounterexampleParent) := by
+    rw [swapChallengeResponse_derivativeCounterexampleParent]
+    exact derivativeCounterexampleParentByChallenge_irreducible
+  exact mappedIrreducible.of_map
+
+/-- The coefficient field used to state separability in the response
+variable. -/
+abbrev CounterexampleResponseFunctionField
+    (K : Type*) [Field K] := FractionRing (BivariatePolynomial K)
+
+def parentInResponseFunctionField
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K) :
+    Polynomial (CounterexampleResponseFunctionField K) :=
+  parent.map (algebraMap (BivariatePolynomial K)
+    (CounterexampleResponseFunctionField K))
+
+theorem parentInResponseFunctionField_irreducible
+    {K : Type*} [Field K] {parent : TrivariatePolynomial K}
+    (parentIrreducible : Irreducible parent)
+    (coefficientOneNeZero : parent.coeff 1 ≠ 0) :
+    Irreducible (parentInResponseFunctionField parent) := by
+  have parentDegreeNeZero : parent.natDegree ≠ 0 := by
+    intro degreeZero
+    apply coefficientOneNeZero
+    apply Polynomial.coeff_eq_zero_of_natDegree_lt
+    omega
+  have primitive := parentIrreducible.isPrimitive parentDegreeNeZero
+  exact primitive.irreducible_iff_irreducible_map_fraction_map.mp
+    parentIrreducible
+
+theorem parentInResponseFunctionField_derivative_ne_zero
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K)
+    (coefficientOneNeZero : parent.coeff 1 ≠ 0) :
+    (parentInResponseFunctionField parent).derivative ≠ 0 := by
+  intro derivativeZero
+  have coefficientZero := congrArg
+    (fun polynomial : Polynomial (CounterexampleResponseFunctionField K) ↦
+      polynomial.coeff 0) derivativeZero
+  rw [Polynomial.coeff_derivative] at coefficientZero
+  norm_num at coefficientZero
+  rw [parentInResponseFunctionField, Polynomial.coeff_map] at coefficientZero
+  have mappedCoefficientZero :
+      algebraMap (BivariatePolynomial K)
+          (CounterexampleResponseFunctionField K) (parent.coeff 1) = 0 :=
+    coefficientZero
+  have mappedCoefficientZero' :
+      algebraMap (BivariatePolynomial K)
+          (CounterexampleResponseFunctionField K) (parent.coeff 1) =
+        algebraMap (BivariatePolynomial K)
+          (CounterexampleResponseFunctionField K) 0 := by
+    simpa using mappedCoefficientZero
+  exact coefficientOneNeZero
+    (IsFractionRing.injective (BivariatePolynomial K)
+      (CounterexampleResponseFunctionField K) mappedCoefficientZero')
+
+/-- Separability of a trivariate parent in the response variable, over the
+fraction field `Frac(K[X,Z])`. -/
+def SeparableInResponse
+    {K : Type*} [Field K] (parent : TrivariatePolynomial K) : Prop :=
+  (parentInResponseFunctionField parent).Separable
+
+theorem separableInResponse_of_irreducible_of_coeff_one_ne_zero
+    {K : Type*} [Field K] {parent : TrivariatePolynomial K}
+    (parentIrreducible : Irreducible parent)
+    (coefficientOneNeZero : parent.coeff 1 ≠ 0) :
+    SeparableInResponse parent := by
+  rw [SeparableInResponse, Polynomial.separable_iff_derivative_ne_zero
+    (parentInResponseFunctionField_irreducible parentIrreducible
+      coefficientOneNeZero)]
+  exact parentInResponseFunctionField_derivative_ne_zero parent
+    coefficientOneNeZero
+
+/-- The positive-order counterexample is separable in `Y` over
+`Frac(K[X,Z])`. -/
+theorem positiveOrderParent_separableInResponse
+    {K : Type*} [Field K] : SeparableInResponse (positiveOrderParent K) := by
+  apply separableInResponse_of_irreducible_of_coeff_one_ne_zero
+    positiveOrderParent_irreducible
+  rw [positiveOrderParent_coeff]
+  norm_num
+
+@[simp] theorem counterexample_coeff_C_pow_zero
+    {R : Type*} [Semiring R] (coefficient : R) (exponent : Nat) :
+    ((Polynomial.C coefficient : Polynomial R) ^ exponent).coeff 0 =
+      coefficient ^ exponent := by
+  calc
+    ((Polynomial.C coefficient : Polynomial R) ^ exponent).coeff 0 =
+        (Polynomial.C (coefficient ^ exponent) : Polynomial R).coeff 0 :=
+      congrArg (fun polynomial : Polynomial R ↦ polynomial.coeff 0)
+        (Polynomial.C_pow (R := R) (a := coefficient)
+          (n := exponent)).symm
+    _ = coefficient ^ exponent := Polynomial.coeff_C_zero
+
+@[simp] theorem counterexample_coeff_C_pow_succ
+    {R : Type*} [Semiring R] (coefficient : R)
+    (exponent coefficientIndex : Nat) :
+    ((Polynomial.C coefficient : Polynomial R) ^ exponent).coeff
+        (coefficientIndex + 1) = 0 := by
+  calc
+    ((Polynomial.C coefficient : Polynomial R) ^ exponent).coeff
+          (coefficientIndex + 1) =
+        (Polynomial.C (coefficient ^ exponent) : Polynomial R).coeff
+          (coefficientIndex + 1) :=
+      congrArg (fun polynomial : Polynomial R ↦
+        polynomial.coeff (coefficientIndex + 1))
+        (Polynomial.C_pow (R := R) (a := coefficient)
+          (n := exponent)).symm
+    _ = 0 := Polynomial.coeff_C_succ
+
+/-- The full saturation parent written by response degree. -/
+theorem saturationParent_expansion
+    {K : Type*} [Field K] :
+    saturationParent K =
+      Polynomial.X ^ 2 +
+        Polynomial.C (Polynomial.X ^ 2 + Polynomial.X + 1) *
+          Polynomial.X +
+        Polynomial.C
+          (Polynomial.X ^ 3 + Polynomial.X ^ 2 +
+            Polynomial.C Polynomial.X) := by
+  unfold saturationParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp only [Polynomial.C_add, Polynomial.C_pow, Polynomial.C_1]
+  ring
+
+theorem saturationParent_coeff_zero
+    {K : Type*} [Field K] :
+    (saturationParent K).coeff 0 =
+      Polynomial.X ^ 3 + Polynomial.X ^ 2 +
+        Polynomial.C Polynomial.X := by
+  unfold saturationParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul]
+  ring
+
+/-- The response-linear coefficient of the saturation parent. -/
+theorem saturationParent_coeff_one
+    {K : Type*} [Field K] :
+    (saturationParent K).coeff 1 = Polynomial.X ^ 2 + Polynomial.X + 1 := by
+  have antiOne : (Finset.antidiagonal 1 : Finset (Nat × Nat)) =
+      {(0, 1), (1, 0)} := by decide
+  unfold saturationParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul, antiOne, Polynomial.coeff_one,
+    Polynomial.coeff_X]
+  ring
+
+theorem saturationParent_coeff_two
+    {K : Type*} [Field K] :
+    (saturationParent K).coeff 2 = 1 := by
+  have antiTwo : (Finset.antidiagonal 2 : Finset (Nat × Nat)) =
+      {(0, 2), (1, 1), (2, 0)} := by decide
+  unfold saturationParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul, antiTwo, Polynomial.coeff_one,
+    Polynomial.coeff_X]
+
+@[simp] theorem saturationParent_coeff_zero_degree
+    {K : Type*} [Field K] :
+    ((saturationParent K).coeff 0).natDegree = 3 := by
+  rw [saturationParent_coeff_zero]
+  compute_degree
+  all_goals simp
+
+@[simp] theorem saturationParent_coeff_one_degree
+    {K : Type*} [Field K] :
+    ((saturationParent K).coeff 1).natDegree = 2 := by
+  rw [saturationParent_coeff_one]
+  compute_degree
+  all_goals simp
+
+@[simp] theorem saturationParent_coeff_two_degree
+    {K : Type*} [Field K] :
+    ((saturationParent K).coeff 2).natDegree = 0 := by
+  rw [saturationParent_coeff_two]
+  simp
+
+@[simp] theorem saturationParent_yDegree
+    {K : Type*} [Field K] : (saturationParent K).natDegree = 2 := by
+  rw [saturationParent_expansion]
+  compute_degree
+  all_goals simp
+
+/-- The saturation parent has the paper's full weighted coefficient bound
+`D_R=3` for response weight `ell=1`. -/
+theorem saturationParent_coefficient_bound
+    {K : Type*} [Field K] :
+    ParentCoefficientBound (saturationParent K) 1 3 := by
+  intro exponent exponentMem
+  have exponentLe : exponent ≤ 2 := by
+    rw [← saturationParent_yDegree (K := K)]
+    exact Polynomial.le_natDegree_of_ne_zero
+      (Polynomial.mem_support_iff.mp exponentMem)
+  interval_cases exponent <;> norm_num
+
+/-- The saturation parent is separable in `Y` over `Frac(K[X,Z])`. -/
+theorem saturationParent_separableInResponse
+    {K : Type*} [Field K] : SeparableInResponse (saturationParent K) := by
+  apply separableInResponse_of_irreducible_of_coeff_one_ne_zero
+    saturationParent_irreducible
+  rw [saturationParent_coeff_one]
+  intro coefficientZero
+  have topCoefficientZero := congrArg
+    (fun polynomial : Polynomial (Polynomial K) ↦ polynomial.coeff 2)
+    coefficientZero
+  norm_num [Polynomial.coeff_add, Polynomial.coeff_X,
+    Polynomial.coeff_one] at topCoefficientZero
+
+/-- The derivative-counterexample parent written by response degree. -/
+theorem derivativeCounterexampleParent_expansion :
+    derivativeCounterexampleParent =
+      Polynomial.X ^ 3 +
+        Polynomial.C (Polynomial.X ^ 2) * Polynomial.X ^ 2 +
+        Polynomial.X +
+        Polynomial.C
+          (Polynomial.X ^ 2 + Polynomial.C Polynomial.X) := by
+  unfold derivativeCounterexampleParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp only [Polynomial.C_add, Polynomial.C_pow]
+  ring
+
+theorem derivativeCounterexampleParent_coeff_zero :
+    derivativeCounterexampleParent.coeff 0 =
+      Polynomial.X ^ 2 + Polynomial.C Polynomial.X := by
+  unfold derivativeCounterexampleParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul]
+
+/-- The response-linear coefficient of the derivative parent is one. -/
+theorem derivativeCounterexampleParent_coeff_one :
+    derivativeCounterexampleParent.coeff 1 = 1 := by
+  have antiOne : (Finset.antidiagonal 1 : Finset (Nat × Nat)) =
+      {(0, 1), (1, 0)} := by decide
+  unfold derivativeCounterexampleParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul, antiOne, Polynomial.coeff_one,
+    Polynomial.coeff_X]
+
+theorem derivativeCounterexampleParent_coeff_two :
+    derivativeCounterexampleParent.coeff 2 = Polynomial.X ^ 2 := by
+  have antiTwo : (Finset.antidiagonal 2 : Finset (Nat × Nat)) =
+      {(0, 2), (1, 1), (2, 0)} := by decide
+  unfold derivativeCounterexampleParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul, antiTwo, Polynomial.coeff_one,
+    Polynomial.coeff_X]
+
+theorem derivativeCounterexampleParent_coeff_three :
+    derivativeCounterexampleParent.coeff 3 = 1 := by
+  have antiThree : (Finset.antidiagonal 3 : Finset (Nat × Nat)) =
+      {(0, 3), (1, 2), (2, 1), (3, 0)} := by decide
+  unfold derivativeCounterexampleParent counterexampleTrivariateY
+    counterexampleTrivariateZ counterexampleChallenge
+  simp [Polynomial.coeff_mul, antiThree, Polynomial.coeff_one,
+    Polynomial.coeff_X]
+
+@[simp] theorem derivativeCounterexampleParent_coeff_zero_degree :
+    (derivativeCounterexampleParent.coeff 0).natDegree = 2 := by
+  rw [derivativeCounterexampleParent_coeff_zero]
+  compute_degree
+  all_goals simp
+
+@[simp] theorem derivativeCounterexampleParent_coeff_one_degree :
+    (derivativeCounterexampleParent.coeff 1).natDegree = 0 := by
+  rw [derivativeCounterexampleParent_coeff_one]
+  simp
+
+@[simp] theorem derivativeCounterexampleParent_coeff_two_degree :
+    (derivativeCounterexampleParent.coeff 2).natDegree = 2 := by
+  rw [derivativeCounterexampleParent_coeff_two]
+  simp
+
+@[simp] theorem derivativeCounterexampleParent_coeff_three_degree :
+    (derivativeCounterexampleParent.coeff 3).natDegree = 0 := by
+  rw [derivativeCounterexampleParent_coeff_three]
+  simp
+
+@[simp] theorem derivativeCounterexampleParent_yDegree :
+    derivativeCounterexampleParent.natDegree = 3 := by
+  rw [derivativeCounterexampleParent_expansion]
+  compute_degree
+  all_goals simp
+
+/-- The derivative counterexample has the paper's full weighted coefficient
+bound `D_R=4` for response weight `ell=1`. -/
+theorem derivativeCounterexampleParent_coefficient_bound :
+    ParentCoefficientBound derivativeCounterexampleParent 1 4 := by
+  intro exponent exponentMem
+  have exponentLe : exponent ≤ 3 := by
+    rw [← derivativeCounterexampleParent_yDegree]
+    exact Polynomial.le_natDegree_of_ne_zero
+      (Polynomial.mem_support_iff.mp exponentMem)
+  interval_cases exponent <;> norm_num
+
+/-- The derivative counterexample is separable in `Y` over
+`Frac(F₅[X,Z])`. -/
+theorem derivativeCounterexampleParent_separableInResponse :
+    SeparableInResponse derivativeCounterexampleParent := by
+  apply separableInResponse_of_irreducible_of_coeff_one_ne_zero
+    derivativeCounterexampleParent_irreducible
+  rw [derivativeCounterexampleParent_coeff_one]
+  exact one_ne_zero
+
+def derivativeQuadratic : BivariatePolynomial (ZMod 5) :=
+  Polynomial.X ^ 2 + 1
+
+def derivativeLinearMinus : BivariatePolynomial (ZMod 5) :=
+  Polynomial.X - Polynomial.C 2
+
+def derivativeLinearPlus : BivariatePolynomial (ZMod 5) :=
+  Polynomial.X + Polynomial.C 2
+
+theorem polynomial_two_sq_eq_neg_one :
+    (2 : Polynomial (ZMod 5)) ^ 2 = -1 := by
+  have fourEqNegOne : (4 : ZMod 5) = -1 := by decide
+  calc
+    (2 : Polynomial (ZMod 5)) ^ 2 = 4 := by ring
+    _ = Polynomial.C (4 : ZMod 5) := by
+      exact (Polynomial.C_eq_natCast 4).symm
+    _ = Polynomial.C (-1 : ZMod 5) := congrArg Polynomial.C fourEqNegOne
+    _ = -1 := by simp
+
+/-- Over `F₅`, `Y²+1=(Y-2)(Y+2)`. -/
+theorem derivativeQuadratic_factorization :
+    derivativeQuadratic = derivativeLinearMinus * derivativeLinearPlus := by
+  unfold derivativeQuadratic derivativeLinearMinus derivativeLinearPlus
+  calc
+    Polynomial.X ^ 2 + 1 =
+        Polynomial.X ^ 2 -
+          Polynomial.C (2 : Polynomial (ZMod 5)) ^ 2 := by
+      rw [← Polynomial.C_pow, polynomial_two_sq_eq_neg_one]
+      simp
+    _ = (Polynomial.X - Polynomial.C 2) *
+        (Polynomial.X + Polynomial.C 2) := by ring
+
+theorem derivativeLinearMinus_irreducible :
+    Irreducible derivativeLinearMinus := by
+  exact Polynomial.irreducible_X_sub_C 2
+
+theorem derivativeLinearPlus_irreducible :
+    Irreducible derivativeLinearPlus := by
+  have linearEq : derivativeLinearPlus =
+      Polynomial.X - Polynomial.C (-2) := by
+    simp [derivativeLinearPlus]
+  rw [linearEq]
+  exact Polynomial.irreducible_X_sub_C _
+
+theorem derivativeLinear_relPrime :
+    IsRelPrime derivativeLinearMinus derivativeLinearPlus := by
+  apply derivativeLinearMinus_irreducible.isRelPrime_iff_not_dvd.mpr
+  intro divides
+  have root := Polynomial.dvd_iff_isRoot.mp divides
+  have valueZero : (2 : Polynomial (ZMod 5)) + 2 = 0 := by
+    simpa [derivativeLinearMinus, derivativeLinearPlus,
+      Polynomial.IsRoot] using root
+  have constantZero : (2 : ZMod 5) + 2 = 0 := by
+    simpa using congrArg (Polynomial.eval (0 : ZMod 5)) valueZero
+  have fourNeZero : (4 : ZMod 5) ≠ 0 := by decide
+  apply fourNeZero
+  calc
+    (4 : ZMod 5) = 2 + 2 := by ring
+    _ = 0 := constantZero
+
+theorem derivativeQuadratic_squarefree : Squarefree derivativeQuadratic := by
+  rw [derivativeQuadratic_factorization]
+  exact squarefree_mul_iff.mpr
+    ⟨derivativeLinear_relPrime, derivativeLinearMinus_irreducible.squarefree,
+      derivativeLinearPlus_irreducible.squarefree⟩
+
+theorem derivativeCounterexampleXi_ne_zero : derivativeCounterexampleXi ≠ 0 := by
+  intro xiZero
+  have coefficientZero := congrArg
+    (fun polynomial : Polynomial (ZMod 5) ↦ polynomial.coeff 4) xiZero
+  simp [derivativeCounterexampleXi, Polynomial.coeff_one] at coefficientZero
+
+theorem counterexampleFactor_relPrime_derivativeQuadratic :
+    IsRelPrime (counterexampleFactor (ZMod 5)) derivativeQuadratic := by
+  apply counterexampleFactor_irreducible.isRelPrime_iff_not_dvd.mpr
+  intro divides
+  rw [counterexampleFactor_eq_X_sub_C] at divides
+  have root := Polynomial.dvd_iff_isRoot.mp divides
+  rw [Polynomial.IsRoot, derivativeQuadratic] at root
+  simp only [Polynomial.eval_add, Polynomial.eval_pow, Polynomial.eval_X,
+    Polynomial.eval_one] at root
+  apply derivativeCounterexampleXi_ne_zero
+  rw [derivativeCounterexampleXi]
+  calc
+    Polynomial.X ^ 4 + 1 =
+        (-(Polynomial.X ^ 2 : Polynomial (ZMod 5))) ^ 2 + 1 := by ring
+    _ = 0 := root
+
+/-- The specialized derivative parent is square-free in `F₅[Z][Y]`. -/
+theorem derivativeSpecializedParent_squarefree :
+    Squarefree derivativeSpecializedParent := by
+  rw [derivativeSpecializedParent]
+  exact squarefree_mul_iff.mpr
+    ⟨counterexampleFactor_relPrime_derivativeQuadratic,
+      counterexampleFactor_irreducible.squarefree,
+      derivativeQuadratic_squarefree⟩
+
 #print axioms saturation_tau_strictly_exceeds_printed_base
 #print axioms saturationParent_specialize_zero
 #print axioms saturationParent_branch_divides
@@ -427,6 +1003,18 @@ theorem derivative_printed_ceiling_fails :
 #print axioms derivative_counterexample_xi_regular_weight
 #print axioms derivative_printed_ceiling
 #print axioms derivative_printed_ceiling_fails
+#print axioms counterexampleFactor_irreducible
+#print axioms counterexampleFactor_derivative
+#print axioms counterexampleFactor_coefficient_bound
+#print axioms saturationParent_coefficient_bound
+#print axioms saturationParent_irreducible
+#print axioms saturationParent_separableInResponse
+#print axioms positiveOrderParent_irreducible
+#print axioms positiveOrderParent_separableInResponse
+#print axioms derivativeCounterexampleParent_irreducible
+#print axioms derivativeCounterexampleParent_coefficient_bound
+#print axioms derivativeCounterexampleParent_separableInResponse
+#print axioms derivativeSpecializedParent_squarefree
 
 end
 
