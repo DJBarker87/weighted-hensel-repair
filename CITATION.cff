@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: >-
+  If you use this verification artifact, please cite it using the metadata
+  below.
+title: >-
+  Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
+  Decodability: Lean 4 verification artifact
+type: software
+authors:
+  - family-names: Barker
+    given-names: Dominic
+version: 1.0.2-eprint
+date-released: 2026-08-30
+repository-code: https://github.com/DJBarker87/weighted-hensel-repair
+url: https://github.com/DJBarker87/weighted-hensel-repair/releases/tag/v1.0.2-eprint
+license: Apache-2.0
+keywords:
+  - Lean 4
+  - Reed–Solomon codes
+  - coding theory
+  - formal verification
+  - Hensel lifting

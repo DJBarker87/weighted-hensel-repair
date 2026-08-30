@@ -1,5 +1,12 @@
 # Correcting the Weighted Hensel Estimate
 
+[![Formal verification](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml/badge.svg)](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml)
+
+**Paper:** *Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
+Decodability*, Revision 14
+
+**Verification artifact:** archival tag `v1.0.2-eprint`
+
 ## One-command verification
 
 ```sh
@@ -20,10 +27,11 @@ downloaded `.olean` files are only a Mathlib build cache.
 | Peak RSS | about 6.5 GiB |
 | Swap | none required |
 | Toolchain | Lean `v4.32.0`, pinned Mathlib `v4.32.0` |
-| Archival release | `v1.0.1-eprint` |
+| Archival release | `v1.0.2-eprint` |
 
-The script prints the exact checked-out commit. The release tag identifies the
-immutable ePrint artifact.
+The script prints the exact checked-out commit. The archival tag identifies
+the exact reviewed commit; an ePrint link will be added when its identifier is
+allocated.
 
 ## Headline results
 
