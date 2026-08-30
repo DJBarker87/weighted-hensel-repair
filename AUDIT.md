@@ -2,7 +2,7 @@
 
 ## Closed C-001: specialization separability in Proposition 7.10
 
-**Original classification:** C — the standalone wording of Revision 14 was
+**Original classification:** C — the standalone proposition wording was
 under-hypothesized, but the 2026 source explicitly supplies the needed
 condition.
 

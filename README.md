@@ -3,7 +3,7 @@
 [![Formal verification](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml/badge.svg)](https://github.com/DJBarker87/weighted-hensel-repair/actions/workflows/formal_verification.yml)
 
 **Paper:** *Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
-Decodability*, Revision 14
+Decodability*
 
 **Verification artifact:** archival tag `v1.0.2-eprint`
 
@@ -59,13 +59,12 @@ factorizations.
 
 ## Scope
 
-This is a standalone Lean 4 verification artifact for Revision 14 of
-*Correcting the Weighted Hensel Estimate for Reed–Solomon Curve
-Decodability*. It formalizes the polynomial weight, monicization, regular
-quotient, both repaired Hensel recurrences, both resultant arguments,
-specialization, truncation, interpolation, fixed-branch completion, the 2026
-full-factor transfer, the paper's counterexamples, and both numerical
-Reed–Solomon instances.
+This is a standalone Lean 4 verification artifact for *Correcting the
+Weighted Hensel Estimate for Reed–Solomon Curve Decodability*. It formalizes
+the polynomial weight, monicization, regular quotient, both repaired Hensel
+recurrences, both resultant arguments, specialization, truncation,
+interpolation, fixed-branch completion, the 2026 full-factor transfer, the
+paper's counterexamples, and both numerical Reed–Solomon instances.
 
 The development depends only on Lean and Mathlib. It does not import Aspis or
 formalize any protocol, compiler, cryptographic primitive, or deployment
@@ -88,7 +87,7 @@ separability alone would not imply this, but BCHKS26 Step 2 explicitly chooses
 `x₀` so that every `Rᵢ(x₀,Y,Z)` remains separable over `K(Z)`. The formal
 theorem states that source hypothesis and proves that it implies nonvanishing
 of the intrinsic regular derivative on every irreducible branch. The
-standalone wording issue in Revision 14 is recorded as closed **C-001** in
+standalone wording issue in the paper is recorded as closed **C-001** in
 [AUDIT.md](AUDIT.md); it is not a gap in the 2026 argument.
 
 ## Toolchain and replay
